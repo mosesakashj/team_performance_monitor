@@ -31,3 +31,27 @@ export async function apiGet(path, params = {}) {
 
   return body;
 }
+
+export async function apiPost(path, data = {}) {
+  const url = new URL(`${BASE_URL}${path}`);
+
+  let response;
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(data),
+    });
+  } catch {
+    throw new ApiError('Cannot reach the server. Check your connection and try again.', 0);
+  }
+
+  const body = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const message = body?.error?.message ?? 'Something went wrong. Please try again.';
+    throw new ApiError(message, response.status);
+  }
+
+  return body;
+}

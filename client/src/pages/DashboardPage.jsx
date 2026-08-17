@@ -3,6 +3,7 @@ import { useStats } from '../hooks/useStats.js';
 import { useProjectsList } from '../hooks/useProjects.js';
 import { useTeamsList } from '../hooks/useTeams.js';
 import { useSkillsList } from '../hooks/useSkills.js';
+import { useEnrichedStats, useSkillDistribution, useTopBottlenecks, useGlobalSkillGaps, useActivityFeed } from '../hooks/useDashboardData.js';
 import ErrorBanner from '../components/common/ErrorBanner.jsx';
 import EmptyState from '../components/common/EmptyState.jsx';
 import StatusBadge from '../components/common/StatusBadge.jsx';
@@ -68,6 +69,11 @@ export default function DashboardPage() {
   const { data: allProjects } = useProjectsList({ limit: 100 });
   const { data: teamsData } = useTeamsList();
   const { data: skillsData } = useSkillsList();
+  const { data: enrichedStats } = useEnrichedStats();
+  const { data: skillDist } = useSkillDistribution();
+  const { data: bottlenecks } = useTopBottlenecks({ limit: 5 });
+  const { data: skillGaps } = useGlobalSkillGaps();
+  const { data: activityFeed } = useActivityFeed();
 
   return (
     <div className="flex flex-col gap-8 animate-fade-in">
@@ -147,6 +153,113 @@ export default function DashboardPage() {
         <SkillsDistributionChart skills={skillsData?.skills ?? []} />
         <TeamUtilizationChart teams={teamsData?.teams ?? []} />
       </div>
+
+      {/* Advanced Analytics Row */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Skill Demand vs Supply */}
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h3 className="text-lg font-bold text-slate-900 mb-4">Skill Demand vs Supply</h3>
+          {skillGaps?.gaps?.length > 0 ? (
+            <div className="space-y-3">
+              {skillGaps.gaps.slice(0, 5).map((gap) => (
+                <div key={gap.skill.id} className="flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <Link to={`/skills/${gap.skill.id}`} className="text-sm font-semibold text-slate-800 hover:text-brand-600 truncate block">
+                      {gap.skill.name}
+                    </Link>
+                    <p className="text-[10px] text-slate-400">{gap.demandCount} projects need · {gap.supplyCount} have it</p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <span className={`text-sm font-bold ${gap.ratio > 2 ? 'text-red-600' : gap.ratio > 1 ? 'text-amber-600' : 'text-emerald-600'}`}>
+                      {gap.ratio?.toFixed(1)}x
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <EmptyState title="No skill gaps detected" icon="✅" />
+          )}
+        </section>
+
+        {/* Top Bottlenecks */}
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h3 className="text-lg font-bold text-slate-900 mb-4">Top Bottleneck People</h3>
+          {bottlenecks?.bottlenecks?.length > 0 ? (
+            <div className="space-y-3">
+              {bottlenecks.bottlenecks.map((b, i) => (
+                <Link
+                  key={b.person.id}
+                  to={`/people/${b.person.id}`}
+                  className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-slate-50"
+                >
+                  <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                    i === 0 ? 'bg-amber-100 text-amber-700' :
+                    i === 1 ? 'bg-slate-200 text-slate-600' :
+                    'bg-slate-100 text-slate-500'
+                  }`}>
+                    {i + 1}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-slate-800 truncate">{b.person.name}</p>
+                    <p className="text-[10px] text-slate-400">{b.projectCount} projects · {b.endorsementCount} endorsements</p>
+                  </div>
+                  <span className="text-sm font-bold text-brand-600">{b.score?.toFixed(1)}</span>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <EmptyState title="No bottleneck data" icon="📊" />
+          )}
+        </section>
+
+        {/* Activity Feed */}
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h3 className="text-lg font-bold text-slate-900 mb-4">Recent Activity</h3>
+          {activityFeed?.feed?.length > 0 ? (
+            <div className="space-y-3">
+              {activityFeed.feed.slice(0, 6).map((item, i) => (
+                <div key={i} className="flex items-start gap-3 rounded-lg p-2">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-100 text-[10px] font-bold text-amber-700">
+                    ⭐
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-slate-600">
+                      <span className="font-semibold text-slate-800">{item.actor}</span>
+                      {' endorsed '}
+                      <span className="font-semibold text-slate-800">{item.target}</span>
+                    </p>
+                    {item.date && <p className="text-[10px] text-slate-400 mt-0.5">{item.date}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <EmptyState title="No recent activity" icon="📋" />
+          )}
+        </section>
+      </div>
+
+      {/* Knowledge Transfer Alerts */}
+      {enrichedStats?.avgUtilization && (
+        <div className="rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-white p-6 shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-900">Org Health Summary</h3>
+              <p className="text-sm text-slate-600">
+                Average utilization: <span className="font-bold text-amber-700">{enrichedStats.avgUtilization}%</span> ·
+                Total endorsements: <span className="font-bold text-amber-700">{enrichedStats.totalEndorsements}</span> ·
+                Completed projects: <span className="font-bold text-emerald-700">{enrichedStats.completedProjectCount}</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Two Column Layout */}
       <div className="grid gap-8 lg:grid-cols-3">

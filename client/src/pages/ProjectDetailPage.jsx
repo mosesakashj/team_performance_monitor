@@ -1,135 +1,292 @@
 import { Link, useParams } from 'react-router-dom';
 import { useProject, useProjectCandidates } from '../hooks/useProjects.js';
+import { useProjectSkillGaps } from '../hooks/useAnalytics.js';
 import LoadingSpinner from '../components/common/LoadingSpinner.jsx';
 import ErrorBanner from '../components/common/ErrorBanner.jsx';
 import EmptyState from '../components/common/EmptyState.jsx';
 import StatusBadge from '../components/common/StatusBadge.jsx';
-import Badge from '../components/common/Badge.jsx';
 import { SkeletonTable } from '../components/common/Skeleton.jsx';
+
+function PriorityStars({ priority, max = 5 }) {
+  return (
+    <div className="flex gap-0.5">
+      {Array.from({ length: max }, (_, i) => (
+        <svg key={i} className={`h-4 w-4 ${i < priority ? 'text-amber-400' : 'text-slate-200'}`} fill="currentColor" viewBox="0 0 20 20">
+          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+        </svg>
+      ))}
+    </div>
+  );
+}
+
+function GanttBar({ startDate, endDate, status }) {
+  if (!startDate || !endDate) return null;
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const now = new Date();
+  const totalDays = (end - start) / (1000 * 60 * 60 * 24);
+  const elapsedDays = Math.max(0, Math.min(totalDays, (now - start) / (1000 * 60 * 60 * 24)));
+  const progress = totalDays > 0 ? Math.min(100, (elapsedDays / totalDays) * 100) : 0;
+
+  const statusColors = {
+    active: 'from-blue-500 to-blue-600',
+    completed: 'from-emerald-500 to-emerald-600',
+    proposed: 'from-slate-400 to-slate-500',
+    on_hold: 'from-amber-500 to-amber-600',
+  };
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex items-center justify-between text-sm mb-2">
+        <span className="text-slate-500">{startDate}</span>
+        <span className="font-medium text-slate-700">{Math.round(progress)}% elapsed</span>
+        <span className="text-slate-500">{endDate}</span>
+      </div>
+      <div className="relative h-4 w-full overflow-hidden rounded-full bg-slate-100">
+        <div className={`absolute inset-y-0 left-0 rounded-full bg-gradient-to-r ${statusColors[status] || 'from-slate-400 to-slate-500'} transition-all duration-1000`} style={{ width: `${progress}%` }} />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-[10px] font-bold text-white drop-shadow-sm">{Math.round(progress)}%</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SkillGapCard({ gap }) {
+  const isCovered = gap.coverageCount > 0;
+  return (
+    <div className={`rounded-xl border p-4 transition-all ${isCovered ? 'border-emerald-200 bg-emerald-50/50' : 'border-amber-200 bg-amber-50/50'}`}>
+      <div className="flex items-center justify-between">
+        <div>
+          <Link to={`/skills/${gap.id}`} className="font-semibold text-slate-800 hover:text-brand-600 transition-colors">
+            {gap.name}
+          </Link>
+          <p className="text-xs text-slate-400 mt-0.5">{gap.category} · L{gap.min_proficiency} · {gap.seniority_needed}</p>
+        </div>
+        {isCovered ? (
+          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+            <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+            Covered
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+            <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+            Gap
+          </span>
+        )}
+      </div>
+      {isCovered && gap.coveredBy && (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {gap.coveredBy.slice(0, 3).map((c, i) => (
+            <span key={i} className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-[10px] font-medium text-slate-600 border border-slate-200">
+              {c.name} · L{c.proficiency}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CandidateCard({ candidate, rank }) {
+  const rankStyles = [
+    'border-amber-300 bg-gradient-to-br from-amber-50 to-white shadow-amber-100',
+    'border-slate-300 bg-gradient-to-br from-slate-50 to-white shadow-slate-100',
+    'border-orange-300 bg-gradient-to-br from-orange-50 to-white shadow-orange-100',
+  ];
+  const rankBadge = [
+    'bg-amber-100 text-amber-700',
+    'bg-slate-200 text-slate-600',
+    'bg-orange-100 text-orange-700',
+  ];
+
+  return (
+    <div className={`rounded-xl border-2 p-5 shadow-md transition-all hover:shadow-lg animate-scale-in ${rankStyles[rank] || 'border-slate-200 bg-white'}`}>
+      <div className="flex items-start gap-4">
+        <div className="relative">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 text-lg font-bold text-white shadow-lg shadow-brand-200">
+            {candidate.person.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+          </div>
+          <div className={`absolute -top-2 -left-2 flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold shadow-sm ${rankBadge[rank] || 'bg-slate-100 text-slate-500'}`}>
+            #{rank + 1}
+          </div>
+        </div>
+        <div className="flex-1 min-w-0">
+          <Link to={`/people/${candidate.person.id}`} className="text-lg font-bold text-slate-900 hover:text-brand-600 transition-colors">
+            {candidate.person.name}
+          </Link>
+          <p className="text-sm text-slate-500">{candidate.person.title} · {candidate.person.seniority}</p>
+        </div>
+        <div className="text-right">
+          <div className="text-2xl font-bold text-brand-600">{candidate.totalScore?.toFixed(1)}</div>
+          <div className="text-[10px] font-medium text-slate-400 uppercase">score</div>
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-3 gap-3">
+        <div className="rounded-lg bg-slate-50 p-2.5 text-center">
+          <div className="text-lg font-bold text-blue-600">{candidate.matchedSkills}</div>
+          <div className="text-[10px] font-medium text-slate-400">skills matched</div>
+        </div>
+        <div className="rounded-lg bg-slate-50 p-2.5 text-center">
+          <div className="text-lg font-bold text-violet-600">{candidate.avgProficiency?.toFixed(1)}</div>
+          <div className="text-[10px] font-medium text-slate-400">avg proficiency</div>
+        </div>
+        <div className="rounded-lg bg-slate-50 p-2.5 text-center">
+          <div className={`text-lg font-bold ${candidate.teamFitBonus > 0 ? 'text-emerald-600' : 'text-slate-300'}`}>{candidate.teamFitBonus}</div>
+          <div className="text-[10px] font-medium text-slate-400">team connections</div>
+        </div>
+      </div>
+
+      <div className="mt-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="h-2 w-2 rounded-full bg-emerald-500" />
+          <span className="text-xs text-slate-500">{candidate.person.current_utilization_pct}% utilized</span>
+        </div>
+        {candidate.teamFitBonus > 0 && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 border border-emerald-200">
+            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.25 0 015.25 0z" />
+            </svg>
+            Knows {candidate.teamFitBonus} colleague{candidate.teamFitBonus === 1 ? '' : 's'}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function ProjectDetailPage() {
   const { id } = useParams();
   const { data, isLoading, isError, refetch } = useProject(id);
-  const {
-    data: candidatesData,
-    isLoading: candidatesLoading,
-    isError: candidatesError,
-    refetch: refetchCandidates,
-  } = useProjectCandidates(id);
+  const { data: candidatesData, isLoading: candidatesLoading, isError: candidatesError, refetch: refetchCandidates } = useProjectCandidates(id);
+  const { data: skillGaps } = useProjectSkillGaps(id);
 
   if (isError) return <div className="animate-fade-in"><ErrorBanner message="Couldn't load this project." onRetry={refetch} /></div>;
   if (isLoading) return <LoadingSpinner label="Loading project…" />;
 
   const { project, requiredSkills, staff, teamName } = data;
+  const validSkills = requiredSkills.filter((s) => s.skillId);
+  const validStaff = staff.filter((s) => s.personId);
 
   return (
     <div className="flex flex-col gap-8 animate-fade-in">
-      {/* Project Header */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">{project.name}</h1>
-            <p className="text-slate-500">{project.client_name}</p>
+      {/* Hero Header */}
+      <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-violet-50" />
+        <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-blue-100/30 blur-3xl" />
+        <div className="relative p-8">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-3 mb-2">
+                <StatusBadge status={project.status} />
+                <PriorityStars priority={project.priority} />
+              </div>
+              <h1 className="text-3xl font-bold tracking-tight text-slate-900">{project.name}</h1>
+              <p className="text-lg text-slate-500 mt-1">{project.client_name}</p>
+            </div>
+            {project.budget && (
+              <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-5 py-3 text-right">
+                <div className="text-2xl font-bold text-emerald-700">${project.budget?.toLocaleString('en-US')}</div>
+                <div className="text-xs font-medium text-emerald-500">budget</div>
+              </div>
+            )}
           </div>
-          <StatusBadge status={project.status} />
-        </div>
-        <p className="mt-4 text-sm leading-relaxed text-slate-600">{project.description}</p>
-        <div className="mt-5 flex flex-wrap gap-3">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600">
-            <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
-            </svg>
-            {teamName ?? 'Unassigned team'}
-          </span>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600">
-            <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-            </svg>
-            {project.start_date} → {project.end_date}
-          </span>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600">
-            <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
-            </svg>
-            Priority {project.priority}/5
-          </span>
-          {project.budget && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700">
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              ${project.budget?.toLocaleString('en-US')}
+          <p className="mt-4 text-sm leading-relaxed text-slate-600 max-w-3xl">{project.description}</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {teamName && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-sm text-slate-600 shadow-sm">
+                👥 {teamName}
+              </span>
+            )}
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-sm text-slate-600 shadow-sm">
+              📅 {project.start_date} → {project.end_date}
             </span>
-          )}
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-sm text-slate-600 shadow-sm">
+              ⭐ Priority {project.priority}/5
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Required Skills */}
+      {/* Gantt Timeline */}
       <section className="animate-slide-up">
-        <h2 className="mb-4 section-heading">Required skills</h2>
-        {requiredSkills.filter((s) => s.skillId).length === 0 ? (
-          <EmptyState title="No skill requirements set" icon="⚡" />
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {requiredSkills
-              .filter((s) => s.skillId)
-              .map((skill) => (
-                <Link
-                  key={skill.skillId}
-                  to={`/skills/${skill.skillId}`}
-                  className="group flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm transition-all hover:border-brand-300 hover:bg-brand-50"
-                >
-                  <span className="font-medium text-slate-700 group-hover:text-brand-700">{skill.name}</span>
-                  <span className="text-xs text-slate-400">
-                    L{skill.minProficiency} · {skill.seniorityNeeded}
-                  </span>
-                </Link>
-              ))}
-          </div>
-        )}
+        <h2 className="text-lg font-bold text-slate-900 mb-4">Project Timeline</h2>
+        <GanttBar startDate={project.start_date} endDate={project.end_date} status={project.status} />
       </section>
 
-      {/* Current Staff */}
-      <section className="animate-slide-up">
-        <h2 className="mb-4 section-heading">Current staff</h2>
-        {staff.filter((s) => s.personId).length === 0 ? (
-          <EmptyState
-            title="No one staffed yet"
-            description="Check the recommended candidates below to find the right people."
-            icon="👥"
-          />
-        ) : (
-          <ul className="list-container">
-            {staff
-              .filter((s) => s.personId)
-              .map((person) => (
-                <li key={person.personId} className="list-item">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold text-brand-700">
-                      {person.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
-                    </div>
-                    <div>
-                      <Link to={`/people/${person.personId}`} className="font-medium text-slate-800 hover:text-brand-700 transition-colors">
-                        {person.name}
-                      </Link>
-                      <p className="text-xs text-slate-400">{person.role} · {person.allocationPct}% allocation</p>
-                    </div>
-                  </div>
-                  <span className="text-xs text-slate-400">{person.endDate ? `ended ${person.endDate}` : 'active'}</span>
-                </li>
+      <div className="grid gap-8 lg:grid-cols-2">
+        {/* Skill Gap Analysis */}
+        <section className="animate-slide-up">
+          <h2 className="text-lg font-bold text-slate-900 mb-4">Skill Coverage Analysis</h2>
+          {skillGaps?.gaps?.length > 0 ? (
+            <div className="space-y-3">
+              {skillGaps.gaps.map((gap) => (
+                <SkillGapCard key={gap.id} gap={gap} />
               ))}
-          </ul>
-        )}
-      </section>
+            </div>
+          ) : validSkills.length > 0 ? (
+            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex flex-wrap gap-2">
+                {validSkills.map((skill) => (
+                  <Link
+                    key={skill.skillId}
+                    to={`/skills/${skill.skillId}`}
+                    className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm transition-all hover:border-brand-300 hover:bg-brand-50"
+                  >
+                    <span className="font-medium text-slate-700">{skill.name}</span>
+                    <span className="text-xs text-slate-400">L{skill.minProficiency} · {skill.seniorityNeeded}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <EmptyState title="No skill requirements set" icon="⚡" />
+          )}
+        </section>
+
+        {/* Current Staff */}
+        <section className="animate-slide-up">
+          <h2 className="text-lg font-bold text-slate-900 mb-4">Current Staff ({validStaff.length})</h2>
+          {validStaff.length === 0 ? (
+            <EmptyState
+              title="No one staffed yet"
+              description="Check the recommended candidates below to find the right people."
+              icon="👥"
+            />
+          ) : (
+            <div className="space-y-2">
+              {validStaff.map((person) => (
+                <Link
+                  key={person.personId}
+                  to={`/people/${person.personId}`}
+                  className="group flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 transition-all hover:border-brand-300 hover:shadow-sm"
+                >
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 text-sm font-bold text-white shadow-md shadow-brand-200">
+                    {person.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-slate-800 group-hover:text-brand-600 transition-colors">{person.name}</p>
+                    <p className="text-xs text-slate-400">{person.role} · {person.allocationPct}% allocation</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-bold text-slate-600">{person.allocationPct}%</div>
+                    <div className="text-[10px] text-slate-400">allocation</div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
 
       {/* Recommended Candidates */}
       <section className="animate-slide-up">
         <div className="mb-2 flex items-center justify-between">
-          <h2 className="section-heading">Recommended candidates</h2>
+          <h2 className="text-lg font-bold text-slate-900">Recommended Candidates</h2>
         </div>
         <p className="mb-4 text-sm text-slate-500">
-          Ranked by matching &amp; closely related skills, availability, and prior collaboration with people already on this
-          project.
+          Ranked by matching & closely related skills, availability, and prior collaboration with people already on this project.
         </p>
         {candidatesError ? (
           <ErrorBanner message="Couldn't load candidate recommendations." onRetry={refetchCandidates} />
@@ -142,81 +299,10 @@ export default function ProjectDetailPage() {
             icon="🔍"
           />
         ) : (
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
-                  <tr>
-                    <th className="px-4 py-3 font-medium">Rank</th>
-                    <th className="px-4 py-3 font-medium">Person</th>
-                    <th className="px-4 py-3 font-medium">Skills</th>
-                    <th className="px-4 py-3 font-medium">Proficiency</th>
-                    <th className="px-4 py-3 font-medium">Team fit</th>
-                    <th className="px-4 py-3 font-medium">Score</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {candidatesData.candidates.map((c, index) => (
-                    <tr key={c.person.id} className="transition-colors hover:bg-slate-50">
-                      <td className="px-4 py-3">
-                        <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
-                          index === 0 ? 'bg-amber-100 text-amber-700' :
-                          index === 1 ? 'bg-slate-200 text-slate-600' :
-                          index === 2 ? 'bg-orange-100 text-orange-700' :
-                          'bg-slate-100 text-slate-500'
-                        }`}>
-                          {index + 1}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold text-brand-700">
-                            {c.person.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
-                          </div>
-                          <div>
-                            <Link to={`/people/${c.person.id}`} className="font-medium text-slate-800 hover:text-brand-700 transition-colors">
-                              {c.person.name}
-                            </Link>
-                            <p className="text-xs text-slate-400">{c.person.title}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge color="brand">{c.matchedSkills} matched</Badge>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <div className="h-1.5 w-16 overflow-hidden rounded-full bg-slate-100">
-                            <div
-                              className="h-full rounded-full bg-brand-500"
-                              style={{ width: `${(c.avgProficiency / 5) * 100}%` }}
-                            />
-                          </div>
-                          <span className="text-xs text-slate-500">{c.avgProficiency?.toFixed(1)}</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        {c.teamFitBonus > 0 ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
-                            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
-                            </svg>
-                            {c.teamFitBonus} colleague{c.teamFitBonus === 1 ? '' : 's'}
-                          </span>
-                        ) : (
-                          <span className="text-xs text-slate-400">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="inline-flex items-center rounded-full bg-brand-50 px-2.5 py-0.5 text-sm font-bold text-brand-700">
-                          {c.totalScore?.toFixed(1)}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {candidatesData.candidates.map((c, index) => (
+              <CandidateCard key={c.person.id} candidate={c} rank={index} />
+            ))}
           </div>
         )}
       </section>

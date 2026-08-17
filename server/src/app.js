@@ -11,6 +11,9 @@ import skillsRoutes from './routes/skills.routes.js';
 import teamsRoutes from './routes/teams.routes.js';
 import searchRoutes from './routes/search.routes.js';
 import hierarchyRoutes from './routes/hierarchy.routes.js';
+import analyticsRoutes from './routes/analytics.routes.js';
+import dashboardRoutes from './routes/dashboard.routes.js';
+import recommendationsRoutes from './routes/recommendations.routes.js';
 
 export function createApp() {
   const app = express();
@@ -27,6 +30,9 @@ export function createApp() {
   app.use('/api/teams', teamsRoutes);
   app.use('/api/search', searchRoutes);
   app.use('/api/hierarchy', hierarchyRoutes);
+  app.use('/api/analytics', analyticsRoutes);
+  app.use('/api/dashboard', dashboardRoutes);
+  app.use('/api/recommendations', recommendationsRoutes);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

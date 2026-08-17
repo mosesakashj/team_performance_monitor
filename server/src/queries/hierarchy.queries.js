@@ -4,17 +4,16 @@ export async function getOrgHierarchy() {
   const rows = await runQuery(
     `
     MATCH (manager:Person)-[m:MANAGES]->(report:Person)
-    RETURN
-      manager { .*, reports: [] } AS manager,
-      collect(report { .*, relationshipId: elementId(m) }) AS reports
+    WITH manager, collect(report { .id, .name, .title, .seniority }) AS reports
+    RETURN manager { .*, reports: reports } AS managerData, reports
     ORDER BY manager.name
     `
   );
 
   const byManager = new Map();
   for (const row of rows) {
-    byManager.set(row.manager.id, {
-      person: { ...row.manager, isManager: true },
+    byManager.set(row.managerData.id, {
+      person: { ...row.managerData, isManager: true },
       reports: row.reports,
     });
   }
@@ -23,7 +22,8 @@ export async function getOrgHierarchy() {
     `
     MATCH (p:Person)
     OPTIONAL MATCH (p)-[:MANAGES]->(direct)
-    RETURN p { .*, reportCount: count(direct) } AS person
+    WITH p, count(direct) AS reportCount
+    RETURN p { .*, reportCount: reportCount } AS person
     ORDER BY p.name
     `
   );
@@ -48,32 +48,38 @@ export async function getEndorsements(skillId) {
     const rows = await runQuery(
       `
       MATCH (endorser:Person)-[e:ENDORSED]->(p:Person)-[:HAS_SKILL]->(s:Skill {id: $skillId})
-      RETURN
-        p { .*, skills: [], teams: [], projects: [] } AS endorsee,
-        collect(DISTINCT {endorser: endorser { .* }, date: e.date, note: e.note}) AS endorsements
+      WITH p, collect(DISTINCT {endorserId: endorser.id, endorserName: endorser.name, endorserTitle: endorser.title, date: e.date, note: e.note}) AS endorsements
+      RETURN p { .*, skills: [], teams: [], projects: [] } AS endorsee, endorsements, size(endorsements) AS endorsementCount
       ORDER BY p.name
       `,
       { skillId }
     );
     return rows.map((r) => ({
       endorsee: r.endorsee,
-      endorsements: r.endorsements,
-      endorsementCount: r.endorsements.length,
+      endorsements: r.endorsements.map((e) => ({
+        endorser: { id: e.endorserId, name: e.endorserName, title: e.endorserTitle },
+        date: e.date,
+        note: e.note,
+      })),
+      endorsementCount: r.endorsementCount,
     }));
   }
 
   const rows = await runQuery(
     `
     MATCH (endorser:Person)-[e:ENDORSED]->(p:Person)
-    RETURN
-      p { .*, skills: [], teams: [], projects: [] } AS endorsee,
-      collect(DISTINCT {endorser: endorser { .* }, date: e.date, note: e.note}) AS endorsements
-    ORDER BY endorsements.size() DESC, p.name
+    WITH p, collect(DISTINCT {endorserId: endorser.id, endorserName: endorser.name, endorserTitle: endorser.title, date: e.date, note: e.note}) AS endorsements
+    RETURN p { .*, skills: [], teams: [], projects: [] } AS endorsee, endorsements, size(endorsements) AS endorsementCount
+    ORDER BY endorsementCount DESC, p.name
     `
   );
   return rows.map((r) => ({
     endorsee: r.endorsee,
-    endorsements: r.endorsements,
-    endorsementCount: r.endorsements.length,
+    endorsements: r.endorsements.map((e) => ({
+      endorser: { id: e.endorserId, name: e.endorserName, title: e.endorserTitle },
+      date: e.date,
+      note: e.note,
+    })),
+    endorsementCount: r.endorsementCount,
   }));
 }
