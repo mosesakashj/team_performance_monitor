@@ -86,6 +86,7 @@ export default function GlobalSearch() {
         <input
           ref={inputRef}
           type="search"
+          data-search-input
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);

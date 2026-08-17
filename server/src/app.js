@@ -10,6 +10,7 @@ import projectsRoutes from './routes/projects.routes.js';
 import skillsRoutes from './routes/skills.routes.js';
 import teamsRoutes from './routes/teams.routes.js';
 import searchRoutes from './routes/search.routes.js';
+import hierarchyRoutes from './routes/hierarchy.routes.js';
 
 export function createApp() {
   const app = express();
@@ -25,6 +26,7 @@ export function createApp() {
   app.use('/api/skills', skillsRoutes);
   app.use('/api/teams', teamsRoutes);
   app.use('/api/search', searchRoutes);
+  app.use('/api/hierarchy', hierarchyRoutes);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

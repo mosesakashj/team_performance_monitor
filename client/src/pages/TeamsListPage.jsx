@@ -4,6 +4,7 @@ import { useTeamsList } from '../hooks/useTeams.js';
 import ErrorBanner from '../components/common/ErrorBanner.jsx';
 import EmptyState from '../components/common/EmptyState.jsx';
 import ViewToggle from '../components/common/ViewToggle.jsx';
+import { ExportButton } from '../components/common/ExportButton.jsx';
 import { SkeletonGrid, SkeletonTable } from '../components/common/Skeleton.jsx';
 
 export default function TeamsListPage() {
@@ -19,7 +20,16 @@ export default function TeamsListPage() {
           <h1 className="page-heading">Teams</h1>
           <p className="page-description">Departments and the projects they deliver.</p>
         </div>
-        <ViewToggle view={view} onChange={setView} />
+        <div className="flex items-center gap-3">
+          {teams.length > 0 && (
+            <ExportButton
+              data={teams}
+              filename="teams-export"
+              columns={['name', 'department', 'lead', 'memberCount', 'projectCount']}
+            />
+          )}
+          <ViewToggle view={view} onChange={setView} />
+        </div>
       </div>
 
       {isError ? (

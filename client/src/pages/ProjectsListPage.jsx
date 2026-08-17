@@ -9,6 +9,7 @@ import StatusBadge from '../components/common/StatusBadge.jsx';
 import FilterBar, { FilterSelect } from '../components/common/FilterBar.jsx';
 import Pagination from '../components/common/Pagination.jsx';
 import ViewToggle from '../components/common/ViewToggle.jsx';
+import { ExportButton } from '../components/common/ExportButton.jsx';
 import { SkeletonGrid, SkeletonTable } from '../components/common/Skeleton.jsx';
 
 const STATUSES = [
@@ -44,7 +45,16 @@ export default function ProjectsListPage() {
           <h1 className="page-heading">Projects</h1>
           <p className="page-description">Browse engagements and open a project to see recommended staffing.</p>
         </div>
-        <ViewToggle view={view} onChange={setView} />
+        <div className="flex items-center gap-3">
+          {projects.length > 0 && (
+            <ExportButton
+              data={projects}
+              filename="projects-export"
+              columns={['name', 'status', 'priority', 'description', 'start_date', 'end_date']}
+            />
+          )}
+          <ViewToggle view={view} onChange={setView} />
+        </div>
       </div>
 
       <FilterBar>

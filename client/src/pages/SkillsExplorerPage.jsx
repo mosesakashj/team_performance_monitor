@@ -4,6 +4,7 @@ import { useSkillsList } from '../hooks/useSkills.js';
 import ErrorBanner from '../components/common/ErrorBanner.jsx';
 import EmptyState from '../components/common/EmptyState.jsx';
 import ViewToggle from '../components/common/ViewToggle.jsx';
+import { ExportButton } from '../components/common/ExportButton.jsx';
 import { SkeletonGrid, SkeletonTable } from '../components/common/Skeleton.jsx';
 
 const CATEGORIES = ['Language', 'Framework', 'Cloud', 'Data', 'Soft Skill', 'Domain'];
@@ -37,7 +38,16 @@ export default function SkillsExplorerPage() {
           <h1 className="page-heading">Skills</h1>
           <p className="page-description">Explore the skill catalog and how skills relate to each other.</p>
         </div>
-        <ViewToggle view={view} onChange={setView} />
+        <div className="flex items-center gap-3">
+          {skills.length > 0 && (
+            <ExportButton
+              data={skills}
+              filename="skills-export"
+              columns={['name', 'category', 'endorsementCount']}
+            />
+          )}
+          <ViewToggle view={view} onChange={setView} />
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2">

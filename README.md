@@ -60,9 +60,9 @@ See [`docs/data-model.md`](docs/data-model.md) for the full diagram and property
   client/            Vite + React frontend
     src/
       api/           fetch wrappers per resource
-      hooks/         React Query hooks
-      pages/         one file per route
-      components/    layout shell + shared loading/empty/error components
+      hooks/         React Query hooks + useDarkMode, useUrlFilters, useExportData
+      pages/         one file per route (12 pages)
+      components/    layout shell + shared loading/empty/error + ExportButton, ViewToggle
   docs/
     data-model.md    diagram + property tables
     screenshots/
@@ -110,6 +110,8 @@ All queries are parameterized via the official driver — no string-concatenated
 4. **Skill adjacency** ([`skills.queries.js`](server/src/queries/skills.queries.js)) — one-hop `RELATED_TO` lookup. Powers the Skills Explorer.
 5. **Person / project detail** — `OPTIONAL MATCH` + `collect()` to assemble a profile and its relationships in one round trip.
 6. **Global search** ([`search.queries.js`](server/src/queries/search.queries.js)) — a `UNION` across three node labels for the top-bar autocomplete.
+7. **Org hierarchy** ([`hierarchy.queries.js`](server/src/queries/hierarchy.queries.js)) — relational-awkward: arbitrary-depth `MANAGES` traversal to build a tree. In SQL this is the classic recursive CTE; in Cypher it's a simple pattern match with `collect()`.
+8. **Peer endorsements** ([`hierarchy.queries.js`](server/src/queries/hierarchy.queries.js)) — `ENDORSED` relationships with optional `HAS_SKILL` filter; powers the Endorsements page.
 
 ## API reference
 
@@ -128,6 +130,8 @@ All queries are parameterized via the official driver — no string-concatenated
 | GET | `/api/skills/:id/adjacent` | Related skills |
 | GET | `/api/teams` | Team list |
 | GET | `/api/teams/:id` | Team detail + roster |
+| GET | `/api/hierarchy` | Org hierarchy (manager→report tree, arbitrary depth) |
+| GET | `/api/hierarchy/endorsements` | Peer endorsements, filterable by `skillId` |
 | GET | `/api/search?q=` | Global autocomplete across people/projects/skills |
 
 ## Error handling & resilience

@@ -11,6 +11,7 @@ import StatusBadge from '../components/common/StatusBadge.jsx';
 import FilterBar, { FilterInput, FilterSelect, FilterCheckbox } from '../components/common/FilterBar.jsx';
 import Pagination from '../components/common/Pagination.jsx';
 import ViewToggle from '../components/common/ViewToggle.jsx';
+import { ExportButton } from '../components/common/ExportButton.jsx';
 import { SkeletonGrid, SkeletonTable } from '../components/common/Skeleton.jsx';
 
 const PAGE_SIZE = 24;
@@ -52,7 +53,16 @@ export default function PeopleListPage() {
           <h1 className="page-heading">People</h1>
           <p className="page-description">Browse the team roster and filter by skill, team, or availability.</p>
         </div>
-        <ViewToggle view={view} onChange={setView} />
+        <div className="flex items-center gap-3">
+          {people.length > 0 && (
+            <ExportButton
+              data={people}
+              filename="people-export"
+              columns={['name', 'title', 'location', 'seniority', 'current_utilization_pct', 'available_from']}
+            />
+          )}
+          <ViewToggle view={view} onChange={setView} />
+        </div>
       </div>
 
       <FilterBar>

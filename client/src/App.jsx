@@ -14,6 +14,8 @@ const TeamDetailPage = lazy(() => import('./pages/TeamDetailPage.jsx'));
 const SkillsExplorerPage = lazy(() => import('./pages/SkillsExplorerPage.jsx'));
 const SkillDetailPage = lazy(() => import('./pages/SkillDetailPage.jsx'));
 const ConnectionFinderPage = lazy(() => import('./pages/ConnectionFinderPage.jsx'));
+const OrgHierarchyPage = lazy(() => import('./pages/OrgHierarchyPage.jsx'));
+const EndorsementsPage = lazy(() => import('./pages/EndorsementsPage.jsx'));
 const UserProfilePage = lazy(() => import('./pages/UserProfilePage.jsx'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage.jsx'));
 
@@ -41,6 +43,8 @@ export default function App() {
             <Route path="skills" element={<SkillsExplorerPage />} />
             <Route path="skills/:id" element={<SkillDetailPage />} />
             <Route path="connections" element={<ConnectionFinderPage />} />
+            <Route path="hierarchy" element={<OrgHierarchyPage />} />
+            <Route path="endorsements" element={<EndorsementsPage />} />
             <Route path="profile" element={<UserProfilePage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
