@@ -1,0 +1,13 @@
+{
+  "name": "skills-staffing-graph",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Skills & Project Staffing Network - a graph database app backed by CognoDB",
+  "scripts": {
+    "dev": "concurrently -n server,client -c blue,green \"npm --prefix server run dev\" \"npm --prefix client run dev\"",
+    "seed": "npm --prefix server run seed"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
