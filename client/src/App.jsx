@@ -14,6 +14,7 @@ const TeamDetailPage = lazy(() => import('./pages/TeamDetailPage.jsx'));
 const SkillsExplorerPage = lazy(() => import('./pages/SkillsExplorerPage.jsx'));
 const SkillDetailPage = lazy(() => import('./pages/SkillDetailPage.jsx'));
 const ConnectionFinderPage = lazy(() => import('./pages/ConnectionFinderPage.jsx'));
+const UserProfilePage = lazy(() => import('./pages/UserProfilePage.jsx'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage.jsx'));
 
 function PageLoader() {
@@ -40,6 +41,7 @@ export default function App() {
             <Route path="skills" element={<SkillsExplorerPage />} />
             <Route path="skills/:id" element={<SkillDetailPage />} />
             <Route path="connections" element={<ConnectionFinderPage />} />
+            <Route path="profile" element={<UserProfilePage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>
