@@ -12,12 +12,13 @@ import QuickAction from '../components/dashboard/QuickAction.jsx';
 import SkillGapBar from '../components/dashboard/SkillGapBar.jsx';
 
 export default function DashboardPage() {
+  const [filters, setFilters] = useState({ team: undefined, chartTab: 'overview' });
   const {
     data: batch,
     isLoading,
     isError,
     refetch,
-  } = useDashboardBatch();
+  } = useDashboardBatch(filters);
   const {
     data: activeProjects,
     isLoading: projectsLoading,
@@ -68,6 +69,28 @@ export default function DashboardPage() {
         <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/5" />
         <div className="absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-white/5" />
         <div className="absolute right-20 top-10 h-24 w-24 rounded-full bg-white/5" />
+      </div>
+
+      {/* Filter Bar */}
+      <div className="mb-6 flex flex-col sm:flex-row gap-4">
+        <select
+          className="rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400"
+          onChange={(e) => setFilters({ team: e.target.value || undefined })}
+        >
+          <option value="">All Teams</option>
+          {teamUtilization?.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.name}
+            </option>
+          ))}
+        </select>
+        <select
+          className="rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-400"
+          onChange={(e) => setFilters({ chartTab: e.target.value })}>
+          <option value="overview">Overview</option>
+          <option value="skills">Skills</option>
+          <option value="teams">Teams</option>
+        </select>
       </div>
 
       {/* Stats Grid */}
@@ -147,7 +170,7 @@ export default function DashboardPage() {
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveChartTab(tab.id)}
+              onClick={() => setFilters({ ...filters, chartTab: tab.id })}
               className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
                 activeChartTab === tab.id
                   ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow-sm'

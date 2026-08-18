@@ -98,7 +98,6 @@ export default function GlobalSearch() {
           placeholder="Search people, projects, skills..."
           role="combobox"
           aria-expanded={open && results.length > 0}
-          aria-autocomplete="list"
           aria-controls="search-listbox"
           className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 py-2 pl-9 pr-3 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
         />
@@ -117,7 +116,9 @@ export default function GlobalSearch() {
             </li>
           )}
           {!isFetching && results.length === 0 && (
-            <li className="px-3 py-2.5 text-sm text-slate-400 dark:text-slate-500">No matches for "{query}"</li>
+            <li className="px-3 py-2.5 text-sm text-slate-400 dark:text-slate-500">
+              <span className="inline-block h-4 w-4 rounded-full bg-slate-200 dark:bg-slate-700 text-center text-[8px] font-bold dark:text-slate-400">🔍</span>
+              No matches for "<span className="font-medium text-slate-900 dark:text-slate-100">{query}</span>". Try adjusting your search terms or browsing all people, projects, or skills.</li>
           )}
           {!isFetching &&
             results.map((result, index) => (

@@ -25,7 +25,7 @@ export default function TeamsListPage() {
             <ExportButton
               data={teams}
               filename="teams-export"
-              columns={['name', 'department', 'lead', 'memberCount', 'projectCount']}
+              columns={['name', 'departmentName', 'lead', 'memberCount', 'projectCount']}
             />
           )}
           <ViewToggle view={view} onChange={setView} />
@@ -56,7 +56,7 @@ export default function TeamsListPage() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <h3 className="font-semibold text-slate-900 group-hover:text-brand-700 transition-colors">{team.name}</h3>
-                        <p className="text-sm text-slate-500">{team.department}</p>
+                        <p className="text-sm text-slate-500">{team.departmentName ?? '—'}</p>
                       </div>
                     </div>
                     <div className="mt-4 flex items-center gap-4 text-xs text-slate-400">
@@ -100,7 +100,7 @@ export default function TeamsListPage() {
                             <span className="font-medium text-slate-800 hover:text-brand-700 transition-colors">{team.name}</span>
                           </Link>
                         </td>
-                        <td className="px-4 py-3 text-slate-600">{team.department}</td>
+                        <td className="px-4 py-3 text-slate-600">{team.departmentName ?? '—'}</td>
                         <td className="px-4 py-3">
                           <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
                             {team.memberCount}

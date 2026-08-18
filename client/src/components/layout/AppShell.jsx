@@ -118,12 +118,18 @@ function SidebarLink({ link }) {
         }`
       }
     >
-      <span className={({ isActive }) => `flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
-        isActive ? 'bg-brand-100 text-brand-700 dark:bg-brand-800/50 dark:text-brand-300' : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200 group-hover:text-slate-700 dark:bg-slate-700 dark:text-slate-400 dark:group-hover:bg-slate-600 dark:group-hover:text-slate-300'
-      }`}>
-        {link.icon}
-      </span>
-      <span>{link.label}</span>
+      {({ isActive }) => (
+        <>
+          <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
+            isActive
+              ? 'bg-brand-100 text-brand-700 dark:bg-brand-800/50 dark:text-brand-300'
+              : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200 group-hover:text-slate-700 dark:bg-slate-700 dark:text-slate-400 dark:group-hover:bg-slate-600 dark:group-hover:text-slate-300'
+          }`}>
+            {link.icon}
+          </span>
+          <span>{link.label}</span>
+        </>
+      )}
     </NavLink>
   );
 }

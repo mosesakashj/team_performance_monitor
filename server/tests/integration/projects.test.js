@@ -82,5 +82,32 @@ describe('projects controller', () => {
         expect(e.statusCode).toBe(404);
       }
     });
+
+    it('returns empty candidates when no available people', async () => {
+      projectQueries.getProjectById.mockResolvedValue({ id: 'p1', name: 'Alpha' });
+      staffingQueries.getProjectCandidates.mockResolvedValue([]);
+
+      const req = { params: { id: 'p1' }, query: {} };
+      const res = mockRes();
+      await projectsController.getCandidates(req, res);
+
+      expect(res.json).toHaveBeenCalledWith({ candidates: [] });
+    });
+
+    it('limits candidates by limit query parameter', async () => {
+      projectQueries.getProjectById.mockResolvedValue({ id: 'p1', name: 'Alpha' });
+      staffingQueries.getProjectCandidates.mockResolvedValue([
+        { id: 'person1', name: 'Bob' },
+        { id: 'person2', name: 'Alice' },
+        { id: 'person3', name: 'Charlie' },
+      ]);
+
+      const req = { params: { id: 'p1' }, query: { limit: 2 } };
+      const res = mockRes();
+      await projectsController.getCandidates(req, res);
+
+      expect(res.json).toHaveBeenCalledWith({ candidates: [{ id: 'person1', name: 'Bob' }, { id: 'person2', name: 'Alice' }] });
+    });
   });
+});
 });

@@ -2,8 +2,12 @@ import { AppError } from '../utils/AppError.js';
 import * as skillQueries from '../queries/skills.queries.js';
 
 export async function listSkills(req, res) {
-  const skills = await skillQueries.listSkills({ category: req.query.category });
-  res.json({ skills });
+  const { limit, offset, category } = req.query;
+  const result = await skillQueries.listSkills(
+    { category },
+    { limit: limit ? Number(limit) : undefined, offset: offset ? Number(offset) : undefined },
+  );
+  res.json(result);
 }
 
 export async function getSkillAdjacent(req, res) {

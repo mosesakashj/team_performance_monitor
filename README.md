@@ -37,27 +37,52 @@ StaffingGraph is an internal tool for a consulting/agency-style organization tha
 
 It also lets you trace how any two people are connected (shared projects, teams, or endorsements) and explore the skill-adjacency graph itself.
 
+**Why this graph approach:** The core staffing challenge requires two query patterns that are cumbersome in SQL: (1) finding candidates within N hops of a required skill in the skill-adjacency graph, and (2) checking collaboration history via a self-join on project history. In Cypher, both can be expressed as a single continuous pattern match, avoiding the nested recursive CTEs that would be required in relational SQL.
+
 ## Why a graph database?
 
 The core feature — ranking staffing candidates — needs to combine two things in a single query:
 
-1. **A skill-adjacency closure.** A project might require "Kubernetes," but the best available person only lists "Docker." Finding candidates within *N* hops of a required skill in the `RELATED_TO` skill graph is a variable-length traversal. In SQL, skill adjacency is itself a table, so computing "everyone within 2 hops of a skill" requires a recursive CTE just to build the closure, before you've even joined it back to people.
-2. **A collaboration self-join.** "Team fit" means checking whether a candidate has previously worked on a project alongside people who are *currently* staffed on the target project — a self-join on project history (`Person -> Project <- Person`).
+1. **A skill-adjacency closure.** A project might require "Kubernetes," but the best available person only lists "Docker." Finding candidates within *N* hops of a required skill in the `RELATED_TO` skill graph is a variable-length traversal. In SQL, computing "everyone within 2 hops of a skill" requires a recursive CTE just to build the closure, before joining back to people.
 
-Doing both together in SQL means nesting a recursive CTE inside a self-join — legal, but slow and hard to read. In Cypher, it's one continuous pattern match (see `staffing.queries.js`).
+2. **A collaboration self-join.** "Team fit" means checking whether a candidate has previously worked on a project alongside people currently staffed on the target project — a self-join on project history (`Person -> Project <- Person`).
 
-Two other features are similarly awkward relationally:
+In SQL, doing both together means nesting a recursive CTE inside a self-join — legal but slow and hard to read. In Cypher, it's one continuous pattern match (see `staffing.queries.js`).
 
-- **"How are these two people connected?"** is a `shortestPath()` across three different relationship types with an unknown number of hops. SQL's equivalent needs a recursive CTE with manual cycle detection, and performance degrades sharply past 2-3 hops.
-- **Org hierarchy** (`MANAGES`) of arbitrary depth is the textbook employee/manager recursive-CTE problem, trivial as a graph traversal.
+Similarly awkward relationally:
 
-A relational schema could model all of this data, but every one of these queries would need recursive CTEs, and combining two of them (skill closure + self-join) means nesting one recursive CTE inside another data shape entirely. In Cypher, they're single, readable pattern matches.
+- **"How are these two people connected?"** is a `shortestPath()` across three mixed relationship types. SQL's equivalent needs a recursive CTE with cycle detection, and performance degrades past 2-3 hops.
+- **Org hierarchy** (`MANAGES`) of arbitrary depth is the textbook recursive-CTE problem, trivial as a graph traversal.
+
+In a relational schema, every one of these queries would need recursive CTEs, and combining skill closure + self-join means nesting one recursive CTE inside another shape. In Cypher, they're single, readable pattern matches.
 
 ## Data model
 
-See [`docs/data-model.md`](docs/data-model.md) for the full diagram and property tables. Summary: 4 node labels (`Person`, `Skill`, `Project`, `Team`) and 11 relationship types, including a skill-adjacency graph (`RELATED_TO`) and a peer-endorsement graph (`ENDORSED`) that wouldn't exist as first-class citizens in a normalized relational schema.
+See [`docs/data-model.md`](docs/data-model.md) for the full diagram and property tables.
+
+**Summary:** 4 node labels (`Person`, `Skill`, `Project`, `Team`) and 11 relationship types, including:
+
+- `RELATED_TO` — skill adjacency graph (enables multi-hop skill matching)
+- `ENDORSED` — peer endorsement relationships
+- `WORKED_ON` — people on projects
+- `MEMBER_OF` — team membership
+- `HAS_SKILL` — person-skill association
+- `REQUIRES` — project-skill requirement
+- `MANAGES` — org hierarchy
 
 **Note**: `Department` is currently a string property on `Team`. Consider promoting it to a first-class node with a `HAS_DEPARTMENT` relationship for more granular querying.
+
+```mermaid
+graph TD
+    Person -- WORKED_ON --> Project
+    Person -- MEMBER_OF --> Team
+    Person -- HAS_SKILL --> Skill
+    Project -- REQUIRES --> Skill
+    Team -- MEMBER_OF --> Person
+    Skill -- RELATED_TO --> Skill
+    Person -- ENDORSED --> Person
+    Team -- HAS_SKILL --> Skill
+```
 
 ## Tech stack
 
@@ -96,7 +121,8 @@ See [`docs/data-model.md`](docs/data-model.md) for the full diagram and property
 
 1. Sign up at [console.cognodb.com/signup](https://console.cognodb.com/signup) (free tier, no credit card).
 2. Create a free (c0) instance and pick a region — it provisions in under a minute.
-3. Copy the connection URI (`bolt+s://<instance-id>.databases.cognodb.cloud`) and the generated password for user `cognodb` — **the password is shown once**.
+3. Copy the connection URI (`bolt+s://<instance-id>.databases.cognodb.cloud`) and the generated password for user `cognodb` — **the password is shown once** and must be stored securely.
+4. Whitelist your IP address in the CognoDB console if required for network access.
 
 ### 2. Configure environment variables
 
@@ -105,7 +131,7 @@ cp server/.env.example server/.env      # fill in COGNODB_URI / COGNODB_USER / C
 cp client/.env.example client/.env.local
 ```
 
-**Important**: `JWT_SECRET` must be set — no default value is provided. See `server/src/config/env.js` for details.
+**Important**: `JWT_SECRET` must be set — no default value is provided. See `server/src/config/env.js` for details. Add `CORS_ORIGIN` if deploying remotely.
 
 ### 3. Install and seed
 
@@ -123,6 +149,8 @@ npm run dev            # runs server (:4000) and client (:5173) together
 ```
 
 Open http://localhost:5173. The app polls `GET /api/health` and shows a banner if CognoDB is unreachable — every page fails gracefully with a retry button rather than a blank screen.
+
+**Deployment order:** Deploy the backend first, set `VITE_API_URL` on Vercel, then deploy the frontend, set `CORS_ORIGIN` on Render to the Vercel URL, and redeploy the backend.
 
 ## Key queries explained
 

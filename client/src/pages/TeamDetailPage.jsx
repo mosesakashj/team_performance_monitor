@@ -120,7 +120,7 @@ export default function TeamDetailPage() {
             </div>
             <div className="flex-1">
               <h1 className="text-3xl font-bold tracking-tight text-slate-900">{team.name}</h1>
-              <p className="text-lg text-slate-500 mt-1">{team.department}</p>
+              <p className="text-lg text-slate-500 mt-1">{team.departmentName ?? '—'}</p>
             </div>
           </div>
         </div>

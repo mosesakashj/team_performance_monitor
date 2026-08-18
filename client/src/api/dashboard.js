@@ -7,4 +7,4 @@ export const getTopBottlenecks = (params) => apiGet('/dashboard/bottlenecks', pa
 export const getGlobalSkillGaps = () => apiGet('/dashboard/skill-gaps');
 export const getActivityFeed = () => apiGet('/dashboard/activity-feed');
 export const getEnrichedStats = () => apiGet('/dashboard/enriched-stats');
-export const getDashboardBatch = () => apiGet('/dashboard/batch');
+export const getDashboardBatch = (params) => apiGet('/dashboard/batch', params);

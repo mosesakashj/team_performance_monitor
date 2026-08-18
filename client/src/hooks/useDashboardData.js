@@ -29,9 +29,9 @@ export function useEnrichedStats() {
   return useQuery({ queryKey: ['enriched-stats'], queryFn: dashboardApi.getEnrichedStats });
 }
 
-export function useDashboardBatch() {
+export function useDashboardBatch(params) {
   return useQuery({
-    queryKey: ['dashboard-batch'],
+    queryKey: ['dashboard-batch', params],
     queryFn: dashboardApi.getDashboardBatch,
     staleTime: 30_000,
   });

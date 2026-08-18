@@ -4,6 +4,7 @@ import morgan from 'morgan';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { randomUUID } from 'crypto';
+import { cacheMiddleware } from './middleware/cache.js';
 import { env } from './config/env.js';
 import { logger } from './utils/logger.js';
 import { notFoundHandler, errorHandler } from './middleware/errorHandler.js';
@@ -51,6 +52,11 @@ export function createApp() {
     message: { error: { message: 'Too many requests, please try again later', code: 'RATE_LIMIT_EXCEEDED' } },
   });
   app.use('/api', limiter);
+
+  // LRU cache middleware for read-only endpoints
+  app.use('/api/health', cacheMiddleware(30_000));   // 30s TTL for health status
+  app.use('/api/stats', cacheMiddleware(60_000));    // 60s TTL for dashboard stats
+  app.use('/api/search', cacheMiddleware(30_000));   // 30s TTL for global search
 
   app.use(cors({ origin: '*' })); // Allow all origins for production
   app.use(express.json({ limit: '100kb' }));

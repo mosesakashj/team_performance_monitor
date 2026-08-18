@@ -87,10 +87,9 @@ function isoDate(date) {
 
 // ---------- Generate nodes ----------
 
-const teams = TEAM_NAMES.map(([name, department, departmentId], i) => ({
+const teams = TEAM_NAMES.map(([name, , departmentId], i) => ({
   id: `team-${i + 1}`,
   name,
-  department,
   departmentId,
 }));
 

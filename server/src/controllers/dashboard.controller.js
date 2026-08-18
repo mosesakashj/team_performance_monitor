@@ -37,7 +37,8 @@ export async function getEnrichedStats(_req, res) {
   res.json(data);
 }
 
-export async function getDashboardBatch(_req, res) {
-  const data = await getDashboardBatchQuery();
+export async function getDashboardBatch(req, res) {
+  const { teamId, startDate, endDate } = req.query;
+  const data = await getDashboardBatchQuery({ teamId, startDate, endDate });
   res.json(data);
 }
