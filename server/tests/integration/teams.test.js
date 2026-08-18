@@ -18,13 +18,13 @@ describe('teams controller', () => {
 
   describe('listTeams', () => {
     it('returns teams', async () => {
-      teamQueries.listTeams.mockResolvedValue([{ id: 't1', name: 'Alpha' }]);
+      teamQueries.listTeams.mockResolvedValue({ teams: [{ id: 't1', name: 'Alpha' }], total: 1 });
 
       const req = { query: {} };
       const res = mockRes();
       await teamsController.listTeams(req, res);
 
-      expect(res.json).toHaveBeenCalledWith({ teams: [{ id: 't1', name: 'Alpha' }] });
+      expect(res.json).toHaveBeenCalledWith({ teams: [{ id: 't1', name: 'Alpha' }], total: 1 });
     });
   });
 
