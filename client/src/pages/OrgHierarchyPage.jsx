@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Network } from 'vis-network';
 import { useOrgHierarchy } from '../hooks/useHierarchy.js';
 import LoadingSpinner from '../components/common/LoadingSpinner.jsx';
@@ -10,6 +10,7 @@ import TreeViewNode from '../components/graphs/TreeView.jsx';
 
 export default function OrgHierarchyPage() {
   const { data, isLoading, isError, refetch } = useOrgHierarchy();
+  const navigate = useNavigate();
   const [selectedNode, setSelectedNode] = useState(null);
   const [view, setView] = useState('graph');
   const networkRef = useRef(null);
@@ -66,7 +67,7 @@ export default function OrgHierarchyPage() {
 
     network.on('doubleClick', (params) => {
       if (params.nodes.length > 0) {
-        window.location.href = `/people/${params.nodes[0]}`;
+        navigate(`/people/${params.nodes[0]}`);
       }
     });
 

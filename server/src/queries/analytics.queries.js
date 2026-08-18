@@ -1,4 +1,5 @@
 import { runQuery } from '../db/driver.js';
+import { getBottleneckPeople as getBottleneckPeopleShared } from './shared.queries.js';
 
 /**
  * Skill gap analysis for a project: which required skills (and their adjacencies)
@@ -30,29 +31,10 @@ export async function getProjectSkillGaps(projectId) {
 
 /**
  * People with the most project connections and endorsements — potential bottlenecks.
- * Multi-hop: WORKED_ON + MEMBER_OF + ENDORSED, aggregated into a single score.
+ * Delegates to shared bottleneck query for consistency across analytics and dashboard.
  */
 export async function getBottleneckPeople({ limit = 10 } = {}) {
-  return runQuery(
-    `
-    MATCH (p:Person)
-    OPTIONAL MATCH (p)-[:WORKED_ON]->(proj:Project)
-    WITH p, count(DISTINCT proj) AS projectCount
-    OPTIONAL MATCH (p)-[:MEMBER_OF]->(team:Team)
-    WITH p, projectCount, count(DISTINCT team) AS teamCount
-    OPTIONAL MATCH (p)<-[e:ENDORSED]-(endorser:Person)
-    WITH p, projectCount, teamCount, count(DISTINCT endorser) AS endorsementCount
-    OPTIONAL MATCH (p)-[:HAS_SKILL]->(s:Skill)
-    WITH p, projectCount, teamCount, endorsementCount, count(DISTINCT s) AS skillCount
-    WITH p, projectCount, teamCount, endorsementCount, skillCount,
-         (projectCount * 2 + teamCount + endorsementCount * 0.5) AS bottleneckScore
-    RETURN p { .id, .name, .title, .seniority, .current_utilization_pct } AS person,
-           projectCount, teamCount, endorsementCount, skillCount, bottleneckScore
-    ORDER BY bottleneckScore DESC
-    LIMIT toInteger($limit)
-    `,
-    { limit }
-  );
+  return getBottleneckPeopleShared({ limit });
 }
 
 /**

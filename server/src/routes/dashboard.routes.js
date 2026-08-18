@@ -13,5 +13,6 @@ router.get('/bottlenecks', validate(dashboardBottlenecksSchema), asyncHandler(da
 router.get('/skill-gaps', asyncHandler(dashboardController.getGlobalSkillGaps));
 router.get('/activity-feed', asyncHandler(dashboardController.getActivityFeed));
 router.get('/enriched-stats', cacheMiddleware(60_000), asyncHandler(dashboardController.getEnrichedStats));
+router.get('/batch', cacheMiddleware(60_000), asyncHandler(dashboardController.getDashboardBatch));
 
 export default router;

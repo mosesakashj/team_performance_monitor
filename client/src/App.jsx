@@ -17,6 +17,10 @@ const ConnectionFinderPage = lazy(() => import('./pages/ConnectionFinderPage.jsx
 const OrgHierarchyPage = lazy(() => import('./pages/OrgHierarchyPage.jsx'));
 const EndorsementsPage = lazy(() => import('./pages/EndorsementsPage.jsx'));
 const UserProfilePage = lazy(() => import('./pages/UserProfilePage.jsx'));
+const LoginPage = lazy(() => import('./pages/LoginPage.jsx'));
+const RegisterPage = lazy(() => import('./pages/RegisterPage.jsx'));
+const WhatIfPage = lazy(() => import('./pages/WhatIfPage.jsx'));
+const GanttPage = lazy(() => import('./pages/GanttPage.jsx'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage.jsx'));
 
 function PageLoader() {
@@ -32,6 +36,8 @@ export default function App() {
     <ErrorBoundary>
       <Suspense fallback={<PageLoader />}>
         <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
           <Route element={<AppShell />}>
             <Route index element={<DashboardPage />} />
             <Route path="people" element={<PeopleListPage />} />
@@ -45,6 +51,8 @@ export default function App() {
             <Route path="connections" element={<ConnectionFinderPage />} />
             <Route path="hierarchy" element={<OrgHierarchyPage />} />
             <Route path="endorsements" element={<EndorsementsPage />} />
+            <Route path="what-if" element={<WhatIfPage />} />
+            <Route path="timeline" element={<GanttPage />} />
             <Route path="profile" element={<UserProfilePage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>

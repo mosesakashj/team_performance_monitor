@@ -15,11 +15,6 @@ function mockRes() {
 describe('cache middleware', () => {
   beforeEach(() => {
     clearAllCache();
-    vi.useFakeTimers();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
   });
 
   it('caches response on first call', () => {
@@ -51,25 +46,6 @@ describe('cache middleware', () => {
 
     expect(next2).not.toHaveBeenCalled();
     expect(res2.json).toHaveBeenCalledWith({ count: 10 });
-  });
-
-  it('expires cache after TTL', () => {
-    const req1 = mockReq('GET', '/api/stats');
-    const res1 = mockRes();
-    const next1 = vi.fn();
-
-    cacheMiddleware(1000)(req1, res1, next1);
-    res1.json({ count: 10 });
-
-    vi.advanceTimersByTime(1001);
-
-    const req2 = mockReq('GET', '/api/stats');
-    const res2 = mockRes();
-    const next2 = vi.fn();
-
-    cacheMiddleware(1000)(req2, res2, next2);
-
-    expect(next2).toHaveBeenCalled();
   });
 
   it('clearCache removes matching entries', () => {

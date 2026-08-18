@@ -1,4 +1,5 @@
 import * as dashboardQueries from '../queries/dashboard.queries.js';
+import { getDashboardBatch as getDashboardBatchQuery } from '../queries/dashboardBatch.queries.js';
 
 export async function getUtilizationHeatmap(_req, res) {
   const data = await dashboardQueries.getUtilizationHeatmap();
@@ -33,5 +34,10 @@ export async function getActivityFeed(_req, res) {
 
 export async function getEnrichedStats(_req, res) {
   const data = await dashboardQueries.getEnrichedStats();
+  res.json(data);
+}
+
+export async function getDashboardBatch(_req, res) {
+  const data = await getDashboardBatchQuery();
   res.json(data);
 }

@@ -1,10 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useStats } from '../hooks/useStats.js';
 import { useProjectsList } from '../hooks/useProjects.js';
-import { useTeamsList } from '../hooks/useTeams.js';
-import { useSkillsList } from '../hooks/useSkills.js';
-import { useEnrichedStats, useSkillDistribution, useTopBottlenecks, useGlobalSkillGaps, useActivityFeed } from '../hooks/useDashboardData.js';
+import { useDashboardBatch } from '../hooks/useDashboardData.js';
 import ErrorBanner from '../components/common/ErrorBanner.jsx';
 import EmptyState from '../components/common/EmptyState.jsx';
 import StatusBadge from '../components/common/StatusBadge.jsx';
@@ -15,22 +12,27 @@ import QuickAction from '../components/dashboard/QuickAction.jsx';
 import SkillGapBar from '../components/dashboard/SkillGapBar.jsx';
 
 export default function DashboardPage() {
-  const { data: stats, isLoading: statsLoading, isError: statsError, refetch: refetchStats } = useStats();
+  const {
+    data: batch,
+    isLoading,
+    isError,
+    refetch,
+  } = useDashboardBatch();
   const {
     data: activeProjects,
     isLoading: projectsLoading,
     isError: projectsError,
     refetch: refetchProjects,
   } = useProjectsList({ status: 'active', limit: 6 });
-  const { data: allProjects } = useProjectsList({ limit: 100 });
-  const { data: teamsData } = useTeamsList();
-  const { data: skillsData } = useSkillsList();
-  const { data: enrichedStats } = useEnrichedStats();
-  const { data: skillDist } = useSkillDistribution();
-  const { data: bottlenecks } = useTopBottlenecks({ limit: 5 });
-  const { data: skillGaps } = useGlobalSkillGaps();
-  const { data: activityFeed } = useActivityFeed();
   const [activeChartTab, setActiveChartTab] = useState('overview');
+
+  const stats = batch?.stats;
+  const enrichedStats = batch?.enrichedStats;
+  const skillDist = batch?.distribution;
+  const bottlenecks = batch?.bottlenecks;
+  const skillGaps = batch?.gaps;
+  const activityFeed = batch?.feed;
+  const projectHealth = batch?.health;
 
   return (
     <div className="flex flex-col gap-8 animate-fade-in">
@@ -68,9 +70,9 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Grid */}
-      {statsError ? (
-        <ErrorBanner message="Couldn't load the overview numbers." onRetry={refetchStats} />
-      ) : statsLoading ? (
+      {isError ? (
+        <ErrorBanner message="Couldn't load the overview numbers." onRetry={refetch} />
+      ) : isLoading ? (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
           {Array.from({ length: 5 }).map((_, i) => <SkeletonTile key={i} />)}
         </div>
@@ -158,20 +160,20 @@ export default function DashboardPage() {
 
         {activeChartTab === 'overview' && (
           <div className="grid gap-6 lg:grid-cols-3">
-            <ProjectStatusChart projects={allProjects?.projects ?? []} />
-            <SkillsDistributionChart skills={skillsData?.skills ?? []} />
-            <TeamUtilizationChart teams={teamsData?.teams ?? []} />
+            <ProjectStatusChart projects={projectHealth ?? []} />
+            <SkillsDistributionChart skills={skillDist ?? []} />
+            <TeamUtilizationChart teams={[]} />
           </div>
         )}
         {activeChartTab === 'skills' && (
           <div className="grid gap-6 lg:grid-cols-2">
-            <SkillsDistributionChart skills={skillsData?.skills ?? []} />
+            <SkillsDistributionChart skills={skillDist ?? []} />
             <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm">
               <h3 className="section-heading mb-1">Skill Demand vs Supply</h3>
               <p className="mb-4 text-xs text-slate-400 dark:text-slate-500">Gaps where demand exceeds supply</p>
-              {skillGaps?.gaps?.length > 0 ? (
+              {skillGaps?.length > 0 ? (
                 <div className="space-y-4">
-                  {skillGaps.gaps.slice(0, 6).map((gap) => (
+                  {skillGaps.slice(0, 6).map((gap) => (
                     <SkillGapBar key={gap.skill.id} gap={gap} />
                   ))}
                 </div>
@@ -183,13 +185,13 @@ export default function DashboardPage() {
         )}
         {activeChartTab === 'teams' && (
           <div className="grid gap-6 lg:grid-cols-2">
-            <TeamUtilizationChart teams={teamsData?.teams ?? []} />
+            <TeamUtilizationChart teams={[]} />
             <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm">
               <h3 className="section-heading mb-1">Top Bottleneck People</h3>
               <p className="mb-4 text-xs text-slate-400 dark:text-slate-500">People who are critical-path blockers</p>
-              {bottlenecks?.bottlenecks?.length > 0 ? (
+              {bottlenecks?.length > 0 ? (
                 <div className="space-y-2">
-                  {bottlenecks.bottlenecks.map((b, i) => (
+                  {bottlenecks.map((b, i) => (
                     <Link
                       key={b.person.id}
                       to={`/people/${b.person.id}`}

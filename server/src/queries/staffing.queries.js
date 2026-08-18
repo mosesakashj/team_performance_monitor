@@ -11,15 +11,38 @@ import { runQuery } from '../db/driver.js';
  * closure) nested inside a self-join on project history — awkward and slow.
  * In Cypher it is one continuous pattern match.
  *
- * Note on structure: CognoDB silently ignores any constraint (inline property
- * map, or a reused/pre-bound variable) placed on the *discovered* side of an
- * OPTIONAL MATCH -- it just returns every match of that relationship type
- * unfiltered. So "already staffed on this project" and "worked with someone
- * currently on this project" can't be expressed as OPTIONAL MATCH ...(proj)
- * once proj is bound. Instead we gather each set with an unconstrained
- * OPTIONAL MATCH (anchor -> genuinely fresh variable, which CognoDB handles
- * correctly), collect() it into a list, and filter with list membership,
- * which is a value comparison rather than a graph pattern.
+ * CognoDB quirk workarounds (documented in README):
+ * 1. OPTIONAL MATCH on the discovered side ignores property constraints →
+ *    we gather each filter set with an unconstrained OPTIONAL MATCH + collect()
+ *    and then filter via list membership ($skillId IN skillIds), which is a
+ *    value comparison rather than a graph pattern.
+ * 2. Pattern predicates (WHERE on discovered side) don't filter → avoided entirely
+ *    in favor of the list-membership approach.
+ * 3. Mixing map projection with inline aggregate collapses to null row → aggregates
+ *    are computed in their own WITH before the map projection.
+ *
+ * Structure rationale:
+ * - Step 1 (lines 27-29): Find required skills for the project and their
+ *   adjacent skills (0-2 hops via RELATED_TO) to build the skill closure.
+ * - Step 2 (lines 30-31): UNWIND the raw collection then re-collect with
+ *   DISTINCT to normalize the candidate skill set, avoiding CognoDB's
+ *   OPTIONAL MATCH quirk where inline constraints on the discovered side
+ *   are silently ignored.
+ * - Step 3 (lines 32-33): Gather all people currently staffed on the project
+ *   via an unconstrained OPTIONAL MATCH (CognoDB handles unconstrained
+ *   discovered patterns correctly), then collect their IDs for the
+ *   exclusion filter.
+ * - Step 4 (lines 34-38): For each candidate skill, find people who have
+ *   that skill via HAS_SKILL, filtering out staffed persons and those at
+ *   capacity. Aggregations (matchedSkills count, avg proficiency, weighted
+ *   score based on skill relevance) are computed in a single WITH block.
+ * - Step 5 (lines 41-44): Two-hop collaboration check: find colleagues who
+ *   shared projects with the candidate, then compute teamFitBonus as the
+ *   count of those colleagues who are also currently staffed on the project.
+ *   This bonus rewards candidates who have existing team connections.
+ * - Step 6 (lines 45-50): Return the person object with aggregated metrics
+ *   and a totalScore that weightedSkill (2x for required, 1x for adjacent)
+ *   plus 1.5x teamFitBonus.
  */
 export async function getProjectCandidates(projectId, { limit = 10 } = {}) {
   return runQuery(

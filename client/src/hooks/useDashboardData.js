@@ -28,3 +28,11 @@ export function useActivityFeed() {
 export function useEnrichedStats() {
   return useQuery({ queryKey: ['enriched-stats'], queryFn: dashboardApi.getEnrichedStats });
 }
+
+export function useDashboardBatch() {
+  return useQuery({
+    queryKey: ['dashboard-batch'],
+    queryFn: dashboardApi.getDashboardBatch,
+    staleTime: 30_000,
+  });
+}

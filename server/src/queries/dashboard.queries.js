@@ -1,4 +1,5 @@
 import { runQuery } from '../db/driver.js';
+import { getBottleneckPeople as getBottleneckPeopleShared } from './shared.queries.js';
 
 /**
  * Utilization heatmap: average utilization per team, broken down by seniority.
@@ -52,27 +53,10 @@ export async function getProjectHealth() {
 
 /**
  * Top bottleneck people with detailed breakdown.
+ * Delegates to shared bottleneck query for consistency across analytics and dashboard.
  */
 export async function getTopBottlenecks({ limit = 5 } = {}) {
-  return runQuery(
-    `
-    MATCH (p:Person)
-    OPTIONAL MATCH (p)-[:WORKED_ON]->(proj:Project)
-    WITH p, count(DISTINCT proj) AS projectCount
-    OPTIONAL MATCH (p)-[:MEMBER_OF]->(t:Team)
-    WITH p, projectCount, count(DISTINCT t) AS teamCount
-    OPTIONAL MATCH (p)<-[e:ENDORSED]-(endorser:Person)
-    WITH p, projectCount, teamCount, count(DISTINCT endorser) AS endorsementCount
-    OPTIONAL MATCH (p)-[:HAS_SKILL]->(s:Skill)
-    WITH p, projectCount, teamCount, endorsementCount, count(DISTINCT s) AS skillCount,
-         (projectCount * 2 + teamCount + endorsementCount * 0.5) AS score
-    RETURN p { .id, .name, .title, .current_utilization_pct } AS person,
-           projectCount, teamCount, endorsementCount, skillCount, score
-    ORDER BY score DESC
-    LIMIT toInteger($limit)
-    `,
-    { limit }
-  );
+  return getBottleneckPeopleShared({ limit });
 }
 
 /**

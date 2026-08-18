@@ -2,8 +2,12 @@ import { AppError } from '../utils/AppError.js';
 import * as teamQueries from '../queries/teams.queries.js';
 
 export async function listTeams(req, res) {
-  const teams = await teamQueries.listTeams();
-  res.json({ teams });
+  const { limit, offset } = req.query;
+  const result = await teamQueries.listTeams({
+    limit: limit ? Number(limit) : undefined,
+    offset: offset ? Number(offset) : undefined,
+  });
+  res.json(result);
 }
 
 export async function getTeam(req, res) {

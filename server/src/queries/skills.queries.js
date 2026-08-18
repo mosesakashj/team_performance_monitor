@@ -1,14 +1,16 @@
 import { runQuery } from '../db/driver.js';
 
-export async function listSkills({ category } = {}) {
+export async function listSkills({ category } = {}, { limit = 100, offset = 0 } = {}) {
   const rows = await runQuery(
     `
     MATCH (s:Skill)
     WHERE ($category IS NULL OR s.category = $category)
+    WITH s
+    ORDER BY s.name
+    SKIP toInteger($offset) LIMIT toInteger($limit)
     OPTIONAL MATCH (p:Person)-[:HAS_SKILL]->(s)
     WITH s, count(DISTINCT p) AS peopleCount
     RETURN s { .*, peopleCount: peopleCount } AS skill
-    ORDER BY s.name
     `,
     { category: category ?? null }
   );

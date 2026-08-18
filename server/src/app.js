@@ -18,6 +18,14 @@ import hierarchyRoutes from './routes/hierarchy.routes.js';
 import analyticsRoutes from './routes/analytics.routes.js';
 import dashboardRoutes from './routes/dashboard.routes.js';
 import recommendationsRoutes from './routes/recommendations.routes.js';
+import authRoutes from './routes/auth.routes.js';
+import writeRoutes from './routes/write.routes.js';
+import departmentRoutes from './routes/departments.routes.js';
+import certificationRoutes from './routes/certifications.routes.js';
+import phaseRoutes from './routes/phases.routes.js';
+import staffingWorkflowRoutes from './routes/staffingWorkflow.routes.js';
+import whatIfRoutes from './routes/whatIf.routes.js';
+import reportsRoutes from './routes/reports.routes.js';
 
 morgan.token('id', (req) => req.id);
 
@@ -59,6 +67,14 @@ export function createApp() {
   app.use('/api/analytics', analyticsRoutes);
   app.use('/api/dashboard', dashboardRoutes);
   app.use('/api/recommendations', recommendationsRoutes);
+  app.use('/api/auth', authRoutes);
+  app.use('/api/write', writeRoutes);
+  app.use('/api/departments', departmentRoutes);
+  app.use('/api/certifications', certificationRoutes);
+  app.use('/api/phases', phaseRoutes);
+  app.use('/api/staffing', staffingWorkflowRoutes);
+  app.use('/api/what-if', whatIfRoutes);
+  app.use('/api/reports', reportsRoutes);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

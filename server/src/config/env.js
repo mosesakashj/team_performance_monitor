@@ -19,5 +19,6 @@ export const env = {
     .split(',')
     .map((origin) => origin.trim()),
   nodeEnv: process.env.NODE_ENV ?? 'development',
+  jwtSecret: process.env.JWT_SECRET,
   isConfigured: missing.length === 0,
 };

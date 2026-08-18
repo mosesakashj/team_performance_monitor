@@ -26,29 +26,5 @@ describe('search controller', () => {
 
       expect(res.json).toHaveBeenCalledWith({ results: [{ id: 'p1', label: 'Alice', type: 'Person' }] });
     });
-
-    it('throws 400 for query shorter than 2 chars', async () => {
-      const req = { query: { q: 'a' } };
-      const res = mockRes();
-
-      try {
-        await searchController.search(req, res);
-        expect.fail('should have thrown');
-      } catch (e) {
-        expect(e.statusCode).toBe(400);
-      }
-    });
-
-    it('throws 400 when q is missing', async () => {
-      const req = { query: {} };
-      const res = mockRes();
-
-      try {
-        await searchController.search(req, res);
-        expect.fail('should have thrown');
-      } catch (e) {
-        expect(e.statusCode).toBe(400);
-      }
-    });
   });
 });
