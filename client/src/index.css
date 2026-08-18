@@ -7,8 +7,17 @@
     @apply bg-slate-50 text-slate-900 antialiased;
   }
 
+  .dark body,
+  .dark {
+    @apply bg-slate-900 text-slate-100;
+  }
+
   * {
     @apply border-slate-200;
+  }
+
+  .dark * {
+    @apply border-slate-700;
   }
 }
 
@@ -16,33 +25,57 @@
   .skeleton {
     @apply animate-pulse rounded-lg bg-slate-200;
   }
+  .dark .skeleton {
+    @apply bg-slate-700;
+  }
 
   .filter-input {
     @apply rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500;
+  }
+  .dark .filter-input {
+    @apply border-slate-600 bg-slate-800 text-slate-100 placeholder:text-slate-500 focus:border-brand-400 focus:ring-brand-400;
   }
 
   .filter-select {
     @apply rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500;
   }
+  .dark .filter-select {
+    @apply border-slate-600 bg-slate-800 text-slate-100 focus:border-brand-400 focus:ring-brand-400;
+  }
 
   .section-heading {
     @apply text-lg font-semibold text-slate-900;
+  }
+  .dark .section-heading {
+    @apply text-slate-100;
   }
 
   .page-heading {
     @apply text-2xl font-bold tracking-tight text-slate-900;
   }
+  .dark .page-heading {
+    @apply text-slate-100;
+  }
 
   .page-description {
     @apply mt-1 text-slate-500;
+  }
+  .dark .page-description {
+    @apply text-slate-400;
   }
 
   .card-base {
     @apply rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-200;
   }
+  .dark .card-base {
+    @apply border-slate-700 bg-slate-800;
+  }
 
   .card-interactive {
     @apply card-base hover:border-brand-300 hover:shadow-md hover:shadow-brand-50;
+  }
+  .dark .card-interactive {
+    @apply hover:border-brand-500 hover:shadow-brand-900/30;
   }
 
   .stat-card {
@@ -52,9 +85,15 @@
   .list-container {
     @apply divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white;
   }
+  .dark .list-container {
+    @apply divide-slate-700 border-slate-700 bg-slate-800;
+  }
 
   .list-item {
     @apply flex items-center justify-between px-4 py-3 transition-colors hover:bg-slate-50;
+  }
+  .dark .list-item {
+    @apply hover:bg-slate-700/50;
   }
 
   .badge-base {
@@ -68,9 +107,15 @@
   .btn-secondary {
     @apply inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:shadow-md;
   }
+  .dark .btn-secondary {
+    @apply border-slate-600 bg-slate-800 text-slate-200 hover:bg-slate-700;
+  }
 
   .btn-ghost {
     @apply inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100;
+  }
+  .dark .btn-ghost {
+    @apply text-slate-300 hover:bg-slate-700;
   }
 }
 

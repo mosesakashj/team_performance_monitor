@@ -20,11 +20,11 @@ export default function StatusBadge({ status, className = '' }) {
 }
 
 const COLOR_CLASSES = {
-  green: 'bg-emerald-50 text-emerald-700',
-  brand: 'bg-brand-50 text-brand-700',
-  amber: 'bg-amber-50 text-amber-700',
-  slate: 'bg-slate-100 text-slate-600',
-  red: 'bg-red-50 text-red-700',
+  green: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+  brand: 'bg-brand-50 text-brand-700 dark:bg-brand-900/30 dark:text-brand-400',
+  amber: 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  slate: 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400',
+  red: 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400',
 };
 
 const DOT_CLASSES = {

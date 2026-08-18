@@ -75,7 +75,7 @@ export default function GlobalSearch() {
     <div className="relative w-full max-w-sm" ref={containerRef}>
       <div className="relative">
         <svg
-          className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+          className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500"
           fill="none"
           viewBox="0 0 24 24"
           strokeWidth={2}
@@ -95,12 +95,12 @@ export default function GlobalSearch() {
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={handleKeyDown}
-          placeholder="Search people, projects, skills…"
+          placeholder="Search people, projects, skills..."
           role="combobox"
           aria-expanded={open && results.length > 0}
           aria-autocomplete="list"
           aria-controls="search-listbox"
-          className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+          className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 py-2 pl-9 pr-3 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
         />
       </div>
 
@@ -108,16 +108,16 @@ export default function GlobalSearch() {
         <ul
           id="search-listbox"
           role="listbox"
-          className="absolute z-30 mt-1 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl animate-scale-in"
+          className="absolute z-30 mt-1 w-full overflow-hidden rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 shadow-xl animate-scale-in"
         >
           {isFetching && (
-            <li className="px-3 py-2.5 text-sm text-slate-400">
-              <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-slate-200 border-t-brand-500 mr-2 align-middle" />
-              Searching…
+            <li className="px-3 py-2.5 text-sm text-slate-400 dark:text-slate-500">
+              <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-slate-200 dark:border-slate-600 border-t-brand-500 mr-2 align-middle" />
+              Searching...
             </li>
           )}
           {!isFetching && results.length === 0 && (
-            <li className="px-3 py-2.5 text-sm text-slate-400">No matches for "{query}"</li>
+            <li className="px-3 py-2.5 text-sm text-slate-400 dark:text-slate-500">No matches for "{query}"</li>
           )}
           {!isFetching &&
             results.map((result, index) => (
@@ -131,12 +131,12 @@ export default function GlobalSearch() {
                   onMouseDown={() => handleSelect(result)}
                   onMouseEnter={() => setActiveIndex(index)}
                   className={`flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm transition-colors ${
-                    index === activeIndex ? 'bg-brand-50 text-brand-700' : 'hover:bg-slate-50'
+                    index === activeIndex ? 'bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300' : 'hover:bg-slate-50 dark:hover:bg-slate-700/50'
                   }`}
                 >
                   <span className="text-base">{TYPE_ICONS[result.type]}</span>
-                  <span className="flex-1 truncate font-medium">{result.label}</span>
-                  <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
+                  <span className="flex-1 truncate font-medium text-slate-900 dark:text-slate-100">{result.label}</span>
+                  <span className="shrink-0 rounded-full bg-slate-100 dark:bg-slate-700 px-2 py-0.5 text-xs font-medium text-slate-500 dark:text-slate-400">
                     {result.type}
                   </span>
                 </button>

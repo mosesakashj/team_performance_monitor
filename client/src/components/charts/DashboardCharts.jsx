@@ -1,10 +1,10 @@
 const CATEGORY_COLORS = {
-  Language: { bg: 'bg-blue-500', light: 'bg-blue-100', text: 'text-blue-700' },
-  Framework: { bg: 'bg-violet-500', light: 'bg-violet-100', text: 'text-violet-700' },
-  Cloud: { bg: 'bg-cyan-500', light: 'bg-cyan-100', text: 'text-cyan-700' },
-  Data: { bg: 'bg-amber-500', light: 'bg-amber-100', text: 'text-amber-700' },
-  'Soft Skill': { bg: 'bg-emerald-500', light: 'bg-emerald-100', text: 'text-emerald-700' },
-  Domain: { bg: 'bg-rose-500', light: 'bg-rose-100', text: 'text-rose-700' },
+  Language: { bg: 'bg-blue-500', light: 'bg-blue-100', text: 'text-blue-700', darkLight: 'dark:bg-blue-900/30', darkText: 'dark:text-blue-400' },
+  Framework: { bg: 'bg-violet-500', light: 'bg-violet-100', text: 'text-violet-700', darkLight: 'dark:bg-violet-900/30', darkText: 'dark:text-violet-400' },
+  Cloud: { bg: 'bg-cyan-500', light: 'bg-cyan-100', text: 'text-cyan-700', darkLight: 'dark:bg-cyan-900/30', darkText: 'dark:text-cyan-400' },
+  Data: { bg: 'bg-amber-500', light: 'bg-amber-100', text: 'text-amber-700', darkLight: 'dark:bg-amber-900/30', darkText: 'dark:text-amber-400' },
+  'Soft Skill': { bg: 'bg-emerald-500', light: 'bg-emerald-100', text: 'text-emerald-700', darkLight: 'dark:bg-emerald-900/30', darkText: 'dark:text-emerald-400' },
+  Domain: { bg: 'bg-rose-500', light: 'bg-rose-100', text: 'text-rose-700', darkLight: 'dark:bg-rose-900/30', darkText: 'dark:text-rose-400' },
 };
 
 const STATUS_COLORS = {
@@ -29,22 +29,22 @@ export function SkillsDistributionChart({ skills }) {
   const maxCount = Math.max(...sorted.map(([, count]) => count));
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm">
       <h3 className="section-heading mb-1">Skills by category</h3>
-      <p className="mb-5 text-xs text-slate-400">{skills.length} skills tracked</p>
+      <p className="mb-5 text-xs text-slate-400 dark:text-slate-500">{skills.length} skills tracked</p>
       <div className="space-y-3">
         {sorted.map(([category, count]) => {
-          const colors = CATEGORY_COLORS[category] || { bg: 'bg-slate-500', light: 'bg-slate-100', text: 'text-slate-700' };
+          const colors = CATEGORY_COLORS[category] || { bg: 'bg-slate-500', light: 'bg-slate-100', text: 'text-slate-700', darkLight: 'dark:bg-slate-700', darkText: 'dark:text-slate-400' };
           const pct = (count / maxCount) * 100;
           return (
             <div key={category}>
               <div className="flex items-center justify-between text-sm">
-                <span className="font-medium text-slate-700">{category}</span>
-                <span className="text-slate-500">{count}</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">{category}</span>
+                <span className="text-slate-500 dark:text-slate-400">{count}</span>
               </div>
-              <div className="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
+              <div className="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
                 <div
-                  className={`h-full rounded-full ${colors.bg} transition-all duration-500`}
+                  className={`h-full rounded-full ${colors.bg} transition-all duration-700 ease-out`}
                   style={{ width: `${pct}%` }}
                 />
               </div>
@@ -67,7 +67,6 @@ export function ProjectStatusChart({ projects }) {
   const total = projects.length;
   const entries = Object.entries(statusCounts).sort((a, b) => b[1] - a[1]);
 
-  // Build donut segments
   let accumulated = 0;
   const segments = entries.map(([status, count]) => {
     const pct = (count / total) * 100;
@@ -78,14 +77,13 @@ export function ProjectStatusChart({ projects }) {
   });
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm">
       <h3 className="section-heading mb-1">Project status</h3>
-      <p className="mb-5 text-xs text-slate-400">{total} projects total</p>
+      <p className="mb-5 text-xs text-slate-400 dark:text-slate-500">{total} projects total</p>
       <div className="flex items-center gap-6">
-        {/* Donut */}
         <div className="relative h-32 w-32 shrink-0">
           <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90">
-            <circle cx="18" cy="18" r="14" fill="none" stroke="#f1f5f9" strokeWidth="5" />
+            <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" strokeWidth="5" className="text-slate-100 dark:text-slate-700" />
             {segments.map((seg) => (
               <circle
                 key={seg.status}
@@ -103,21 +101,20 @@ export function ProjectStatusChart({ projects }) {
             ))}
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-2xl font-bold text-slate-900">{total}</span>
-            <span className="text-[10px] text-slate-400">projects</span>
+            <span className="text-2xl font-bold text-slate-900 dark:text-slate-100">{total}</span>
+            <span className="text-[10px] text-slate-400 dark:text-slate-500">projects</span>
           </div>
         </div>
-        {/* Legend */}
         <div className="flex-1 space-y-2">
           {segments.map((seg) => (
             <div key={seg.status} className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: seg.color }} />
-                <span className="text-slate-600">{seg.label}</span>
+                <span className="text-slate-600 dark:text-slate-400">{seg.label}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="font-medium text-slate-900">{seg.count}</span>
-                <span className="text-xs text-slate-400">({seg.pct.toFixed(0)}%)</span>
+                <span className="font-medium text-slate-900 dark:text-slate-100">{seg.count}</span>
+                <span className="text-xs text-slate-400 dark:text-slate-500">({seg.pct.toFixed(0)}%)</span>
               </div>
             </div>
           ))}
@@ -147,25 +144,25 @@ export function TeamUtilizationChart({ teams }) {
   ];
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm">
       <h3 className="section-heading mb-1">Team size</h3>
-      <p className="mb-5 text-xs text-slate-400">{teams.length} teams</p>
+      <p className="mb-5 text-xs text-slate-400 dark:text-slate-500">{teams.length} teams</p>
       <div className="space-y-3">
         {sorted.map((team, i) => {
           const pct = (team.memberCount / maxMembers) * 100;
           return (
             <div key={team.id}>
               <div className="flex items-center justify-between text-sm">
-                <span className="font-medium text-slate-700 truncate max-w-[140px]">{team.name}</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300 truncate max-w-[140px]">{team.name}</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-slate-500">{team.memberCount} members</span>
-                  <span className="text-slate-400">·</span>
-                  <span className="text-slate-400">{team.projectCount} projects</span>
+                  <span className="text-slate-500 dark:text-slate-400">{team.memberCount} members</span>
+                  <span className="text-slate-400 dark:text-slate-600">·</span>
+                  <span className="text-slate-400 dark:text-slate-500">{team.projectCount} projects</span>
                 </div>
               </div>
-              <div className="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
+              <div className="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
                 <div
-                  className={`h-full rounded-full bg-gradient-to-r ${barColors[i % barColors.length]} transition-all duration-500`}
+                  className={`h-full rounded-full bg-gradient-to-r ${barColors[i % barColors.length]} transition-all duration-700 ease-out`}
                   style={{ width: `${pct}%` }}
                 />
               </div>

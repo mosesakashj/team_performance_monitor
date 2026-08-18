@@ -38,8 +38,8 @@ export function SkeletonList({ rows = 5 }) {
 
 export function SkeletonTable({ rows = 5, cols = 5 }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-      <div className="bg-slate-50 px-4 py-3">
+    <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+      <div className="bg-slate-50 dark:bg-slate-700 px-4 py-3">
         <div className="flex gap-4">
           {Array.from({ length: cols }).map((_, i) => (
             <div key={i} className="skeleton h-3 flex-1" />
@@ -47,7 +47,7 @@ export function SkeletonTable({ rows = 5, cols = 5 }) {
         </div>
       </div>
       {Array.from({ length: rows }).map((_, row) => (
-        <div key={row} className="border-t border-slate-100 px-4 py-3">
+        <div key={row} className="border-t border-slate-100 dark:border-slate-700 px-4 py-3">
           <div className="flex gap-4">
             {Array.from({ length: cols }).map((_, col) => (
               <div key={col} className="skeleton h-4 flex-1" />
