@@ -5,6 +5,6 @@ export const teamIdSchema = z.object({
 });
 
 export const teamListSchema = z.object({
-  limit: z.coerce number().int().positive().default(50),
-  offset: z.coerce number().int().default(0),
+  limit: z.coerce.number().int().positive().default(50),
+  offset: z.coerce.number().int().default(0),
 });

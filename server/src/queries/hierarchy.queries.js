@@ -32,20 +32,17 @@ export async function getOrgHierarchy() {
     MATCH (p:Person)
     OPTIONAL MATCH (p)-[:MANAGES]->(direct)
     WITH p, count(direct) AS reportCount
-    RETURN p.id AS id, p.name AS name, p.title AS title, p.seniority AS seniority, reportCount
+    OPTIONAL MATCH (m:Person)-[:MANAGES]->(p)
+    RETURN p.id AS id, p.name AS name, p.title AS title, p.seniority AS seniority,
+           reportCount, CASE WHEN m IS NOT NULL THEN true ELSE false END AS isManaged
     ORDER BY p.name
     `
   );
 
-  const topLevel = [];
-  for (const emp of allEmployees) {
-    const isManaged = rows.some((row) => row.reportId === emp.id);
-    if (!isManaged && emp.reportCount > 0) {
-      topLevel.push({ id: emp.id, name: emp.name, title: emp.title, seniority: emp.seniority, reportCount: emp.reportCount });
-    }
-  }
+  const topLevel = allEmployees.filter((emp) => !emp.isManaged && emp.reportCount > 0);
+  const employees = allEmployees.map(({ isManaged, ...rest }) => rest);
 
-  return { topLevel, byManager: Object.fromEntries(byManager), employees: allEmployees };
+  return { topLevel, byManager: Object.fromEntries(byManager), employees };
 }
 
 function groupEndorsementRows(rows) {
@@ -68,7 +65,7 @@ function groupEndorsementRows(rows) {
   }));
 }
 
-export async function getEndorsements(skillId) {
+export async function getEndorsements(skillId, { limit = 50, offset = 0 } = {}) {
   if (skillId) {
     const rows = await runQuery(
       `
@@ -77,8 +74,9 @@ export async function getEndorsements(skillId) {
              endorser.id AS endorserId, endorser.name AS endorserName, endorser.title AS endorserTitle,
              e.date AS date, e.note AS note
       ORDER BY p.name
+      SKIP toInteger($offset) LIMIT toInteger($limit)
       `,
-      { skillId }
+      { skillId, limit, offset }
     );
     return groupEndorsementRows(rows);
   }
@@ -90,7 +88,9 @@ export async function getEndorsements(skillId) {
            endorser.id AS endorserId, endorser.name AS endorserName, endorser.title AS endorserTitle,
            e.date AS date, e.note AS note
     ORDER BY p.name
-    `
+    SKIP toInteger($offset) LIMIT toInteger($limit)
+    `,
+    { limit, offset }
   );
 
   return groupEndorsementRows(rows).sort((a, b) => b.endorsementCount - a.endorsementCount);

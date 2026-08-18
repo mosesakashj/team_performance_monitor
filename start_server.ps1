@@ -1,0 +1,1 @@
+Start-Process node -ArgumentList "C:\Github\Learning\Test\server\src\index.js" -NoNewWindow -RedirectStandardOutput "C:\Github\Learning\Test\server\server.log" -RedirectStandardError "C:\Github\Learning\Test\server\error.log"

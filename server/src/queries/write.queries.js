@@ -1,6 +1,26 @@
 import { runQuery } from '../db/driver.js';
 import { clearCache } from '../middleware/cache.js';
 
+const PERSON_FIELDS = ['name', 'email', 'title', 'seniority', 'location', 'timezone', 'weekly_capacity_hours', 'current_utilization_pct', 'available_from', 'hourly_cost'];
+const PROJECT_FIELDS = ['name', 'client_name', 'status', 'start_date', 'end_date', 'budget', 'priority', 'description'];
+const SKILL_FIELDS = ['name', 'category'];
+const TEAM_FIELDS = ['name', 'department', 'departmentId'];
+
+function pickAllowed(data, allowed) {
+  const filtered = {};
+  for (const key of Object.keys(data)) {
+    if (allowed.includes(key)) filtered[key] = data[key];
+  }
+  return filtered;
+}
+
+function buildSetClauses(data, prefix) {
+  const keys = Object.keys(data);
+  if (keys.length === 0) return { clause: '', params: {} };
+  const clause = keys.map((k) => `${prefix}.${k} = $${k}`).join(', ');
+  return { clause, params: data };
+}
+
 /**
  * Create a new person.
  */
@@ -31,22 +51,22 @@ export async function createPerson(data) {
 
 /**
  * Update a person by ID.
+ * Uses field whitelisting to prevent Cypher injection.
  */
 export async function updatePerson(id, data) {
-  const setClauses = Object.keys(data)
-    .map((key) => `p.${key} = $${key}`)
-    .join(', ');
-  if (Object.keys(data).length === 0) return null;
+  const filtered = pickAllowed(data, PERSON_FIELDS);
+  if (Object.keys(filtered).length === 0) return null;
 
+  const { clause, params } = buildSetClauses(filtered, 'p');
   await runQuery(
     `
     MATCH (p:Person {id: $id})
-    SET ${setClauses}, p.updatedAt = datetime()
+    SET ${clause}, p.updatedAt = datetime()
     `,
-    { id, ...data }
+    { id, ...params }
   );
   clearCache('/api/people');
-  return { id, ...data };
+  return { id, ...filtered };
 }
 
 /**
@@ -91,22 +111,22 @@ export async function createProject(data) {
 
 /**
  * Update a project by ID.
+ * Uses field whitelisting to prevent Cypher injection.
  */
 export async function updateProject(id, data) {
-  const setClauses = Object.keys(data)
-    .map((key) => `p.${key} = $${key}`)
-    .join(', ');
-  if (Object.keys(data).length === 0) return null;
+  const filtered = pickAllowed(data, PROJECT_FIELDS);
+  if (Object.keys(filtered).length === 0) return null;
 
+  const { clause, params } = buildSetClauses(filtered, 'p');
   await runQuery(
     `
     MATCH (p:Project {id: $id})
-    SET ${setClauses}, p.updatedAt = datetime()
+    SET ${clause}, p.updatedAt = datetime()
     `,
-    { id, ...data }
+    { id, ...params }
   );
   clearCache('/api/projects');
-  return { id, ...data };
+  return { id, ...filtered };
 }
 
 /**
@@ -130,22 +150,22 @@ export async function createSkill(data) {
 
 /**
  * Update a skill by ID.
+ * Uses field whitelisting to prevent Cypher injection.
  */
 export async function updateSkill(id, data) {
-  const setClauses = Object.keys(data)
-    .map((key) => `s.${key} = $${key}`)
-    .join(', ');
-  if (Object.keys(data).length === 0) return null;
+  const filtered = pickAllowed(data, SKILL_FIELDS);
+  if (Object.keys(filtered).length === 0) return null;
 
+  const { clause, params } = buildSetClauses(filtered, 's');
   await runQuery(
     `
     MATCH (s:Skill {id: $id})
-    SET ${setClauses}
+    SET ${clause}
     `,
-    { id, ...data }
+    { id, ...params }
   );
   clearCache('/api/skills');
-  return { id, ...data };
+  return { id, ...filtered };
 }
 
 /**
@@ -170,22 +190,22 @@ export async function createTeam(data) {
 
 /**
  * Update a team by ID.
+ * Uses field whitelisting to prevent Cypher injection.
  */
 export async function updateTeam(id, data) {
-  const setClauses = Object.keys(data)
-    .map((key) => `t.${key} = $${key}`)
-    .join(', ');
-  if (Object.keys(data).length === 0) return null;
+  const filtered = pickAllowed(data, TEAM_FIELDS);
+  if (Object.keys(filtered).length === 0) return null;
 
+  const { clause, params } = buildSetClauses(filtered, 't');
   await runQuery(
     `
     MATCH (t:Team {id: $id})
-    SET ${setClauses}
+    SET ${clause}
     `,
-    { id, ...data }
+    { id, ...params }
   );
   clearCache('/api/teams');
-  return { id, ...data };
+  return { id, ...filtered };
 }
 
 /**

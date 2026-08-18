@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import ErrorBoundary from './components/common/ErrorBoundary.jsx';
 import AppShell from './components/layout/AppShell.jsx';
 import LoadingSpinner from './components/common/LoadingSpinner.jsx';
+import { ProtectedRoute, GuestRoute } from './components/auth/ProtectedRoute.jsx';
 
 const DashboardPage = lazy(() => import('./pages/DashboardPage.jsx'));
 const PeopleListPage = lazy(() => import('./pages/PeopleListPage.jsx'));
@@ -36,8 +37,8 @@ export default function App() {
     <ErrorBoundary>
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
+          <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />
           <Route element={<AppShell />}>
             <Route index element={<DashboardPage />} />
             <Route path="people" element={<PeopleListPage />} />
@@ -50,10 +51,10 @@ export default function App() {
             <Route path="skills/:id" element={<SkillDetailPage />} />
             <Route path="connections" element={<ConnectionFinderPage />} />
             <Route path="hierarchy" element={<OrgHierarchyPage />} />
-            <Route path="endorsements" element={<EndorsementsPage />} />
-            <Route path="what-if" element={<WhatIfPage />} />
-            <Route path="timeline" element={<GanttPage />} />
-            <Route path="profile" element={<UserProfilePage />} />
+            <Route path="endorsements" element={<ProtectedRoute><EndorsementsPage /></ProtectedRoute>} />
+            <Route path="what-if" element={<ProtectedRoute><WhatIfPage /></ProtectedRoute>} />
+            <Route path="timeline" element={<ProtectedRoute><GanttPage /></ProtectedRoute>} />
+            <Route path="profile" element={<ProtectedRoute><UserProfilePage /></ProtectedRoute>} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>

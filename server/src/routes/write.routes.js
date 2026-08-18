@@ -26,25 +26,25 @@ const router = Router();
 
 router.use(authenticate);
 
-router.post('/people', authorize('admin', 'manager'), validate(createPersonSchema), asyncHandler(peopleWriteController.createPerson));
-router.patch('/people/:id', authorize('admin', 'manager'), validate(updatePersonSchema), asyncHandler(peopleWriteController.updatePerson));
+router.post('/people', authorize('admin', 'manager'), validate(createPersonSchema, 'body'), asyncHandler(peopleWriteController.createPerson));
+router.patch('/people/:id', authorize('admin', 'manager'), validate(updatePersonSchema, 'body'), asyncHandler(peopleWriteController.updatePerson));
 router.delete('/people/:id', authorize('admin'), asyncHandler(peopleWriteController.deletePerson));
 
-router.post('/projects', authorize('admin', 'manager'), validate(createProjectSchema), asyncHandler(projectsWriteController.createProject));
-router.patch('/projects/:id', authorize('admin', 'manager'), validate(updateProjectSchema), asyncHandler(projectsWriteController.updateProject));
-router.post('/people/:id/projects/:projectId', authorize('admin', 'manager'), validate(assignToProjectSchema), asyncHandler(projectsWriteController.assignToProject));
+router.post('/projects', authorize('admin', 'manager'), validate(createProjectSchema, 'body'), asyncHandler(projectsWriteController.createProject));
+router.patch('/projects/:id', authorize('admin', 'manager'), validate(updateProjectSchema, 'body'), asyncHandler(projectsWriteController.updateProject));
+router.post('/people/:id/projects/:projectId', authorize('admin', 'manager'), validate(assignToProjectSchema, 'body'), asyncHandler(projectsWriteController.assignToProject));
 router.delete('/people/:id/projects/:projectId', authorize('admin', 'manager'), asyncHandler(projectsWriteController.removeFromProject));
 
-router.post('/skills', authorize('admin'), validate(createSkillSchema), asyncHandler(skillsWriteController.createSkill));
-router.patch('/skills/:id', authorize('admin'), validate(updateSkillSchema), asyncHandler(skillsWriteController.updateSkill));
+router.post('/skills', authorize('admin'), validate(createSkillSchema, 'body'), asyncHandler(skillsWriteController.createSkill));
+router.patch('/skills/:id', authorize('admin'), validate(updateSkillSchema, 'body'), asyncHandler(skillsWriteController.updateSkill));
 
-router.post('/teams', authorize('admin', 'manager'), validate(createTeamSchema), asyncHandler(teamsWriteController.createTeam));
-router.patch('/teams/:id', authorize('admin', 'manager'), validate(updateTeamSchema), asyncHandler(teamsWriteController.updateTeam));
-router.post('/people/:id/teams/:teamId', authorize('admin', 'manager'), validate(assignToTeamSchema), asyncHandler(teamsWriteController.assignToTeam));
+router.post('/teams', authorize('admin', 'manager'), validate(createTeamSchema, 'body'), asyncHandler(teamsWriteController.createTeam));
+router.patch('/teams/:id', authorize('admin', 'manager'), validate(updateTeamSchema, 'body'), asyncHandler(teamsWriteController.updateTeam));
+router.post('/people/:id/teams/:teamId', authorize('admin', 'manager'), validate(assignToTeamSchema, 'body'), asyncHandler(teamsWriteController.assignToTeam));
 router.delete('/people/:id/teams/:teamId', authorize('admin', 'manager'), asyncHandler(teamsWriteController.removeFromTeam));
 
-router.post('/people/:id/endorsements', authorize('admin', 'manager', 'member'), validate(endorsementSchema), asyncHandler(skillsAssignmentController.createEndorsement));
-router.post('/people/:id/skills', authorize('admin', 'manager'), validate(assignSkillSchema), asyncHandler(skillsAssignmentController.assignSkill));
+router.post('/people/:id/endorsements', authorize('admin', 'manager', 'member'), validate(endorsementSchema, 'body'), asyncHandler(skillsAssignmentController.createEndorsement));
+router.post('/people/:id/skills', authorize('admin', 'manager'), validate(assignSkillSchema, 'body'), asyncHandler(skillsAssignmentController.assignSkill));
 router.delete('/people/:id/skills/:skillId', authorize('admin', 'manager'), asyncHandler(skillsAssignmentController.removeSkill));
 
 export default router;

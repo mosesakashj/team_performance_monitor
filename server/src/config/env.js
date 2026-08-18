@@ -1,12 +1,12 @@
 import 'dotenv/config';
 
-const required = ['COGNODB_URI', 'COGNODB_USER', 'COGNODB_PASSWORD'];
+const required = ['COGNODB_URI', 'COGNODB_USER', 'COGNODB_PASSWORD', 'JWT_SECRET'];
 const missing = required.filter((key) => !process.env[key]);
 
 if (missing.length > 0) {
   console.error(
     `[config] Missing required environment variable(s): ${missing.join(', ')}.\n` +
-      '[config] Copy server/.env.example to server/.env and fill in your CognoDB connection details.'
+      '[config] Copy server/.env.example to server/.env and fill in your configuration.'
   );
 }
 
@@ -19,6 +19,6 @@ export const env = {
     .split(',')
     .map((origin) => origin.trim()),
   nodeEnv: process.env.NODE_ENV ?? 'development',
-  jwtSecret: process.env.JWT_SECRET,
+  jwtSecret: process.env.JWT_SECRET ?? '',
   isConfigured: missing.length === 0,
 };

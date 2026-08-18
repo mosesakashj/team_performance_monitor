@@ -6,7 +6,10 @@ export async function listHierarchy(_req, res) {
 }
 
 export async function listEndorsements(req, res) {
-  const { skillId } = req.query;
-  const data = await hierarchyQueries.getEndorsements(skillId);
+  const { skillId, limit, offset } = req.query;
+  const data = await hierarchyQueries.getEndorsements(skillId, {
+    limit: limit ? Number(limit) : undefined,
+    offset: offset ? Number(offset) : undefined,
+  });
   res.json(data);
 }

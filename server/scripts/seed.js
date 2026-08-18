@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import neo4j from 'neo4j-driver';
 import { faker } from '@faker-js/faker';
+import bcrypt from 'bcryptjs';
 import { skills } from './seed-data/skills.js';
 import { relatedSkills } from './seed-data/relatedSkills.js';
 
@@ -317,6 +318,18 @@ async function main() {
   await run('CREATE CONSTRAINT department_id IF NOT EXISTS FOR (d:Department) REQUIRE d.id IS UNIQUE', {});
   await run('CREATE CONSTRAINT certification_id IF NOT EXISTS FOR (c:Certification) REQUIRE c.id IS UNIQUE', {});
   await run('CREATE CONSTRAINT projectphase_id IF NOT EXISTS FOR (pp:ProjectPhase) REQUIRE pp.id IS UNIQUE', {});
+  await run('CREATE CONSTRAINT user_id IF NOT EXISTS FOR (u:User) REQUIRE u.id IS UNIQUE', {});
+  await run('CREATE CONSTRAINT user_email IF NOT EXISTS FOR (u:User) REQUIRE u.email IS UNIQUE', {});
+
+  console.log('[seed] creating performance indexes...');
+  await run('CREATE INDEX person_seniority IF NOT EXISTS FOR (p:Person) ON (p.seniority)', {});
+  await run('CREATE INDEX person_status IF NOT EXISTS FOR (p:Person) ON (p.status)', {});
+  await run('CREATE INDEX person_utilization IF NOT EXISTS FOR (p:Person) ON (p.current_utilization_pct)', {});
+  await run('CREATE INDEX project_status IF NOT EXISTS FOR (p:Project) ON (p.status)', {});
+  await run('CREATE INDEX project_priority IF NOT EXISTS FOR (p:Project) ON (p.priority)', {});
+  await run('CREATE INDEX skill_category IF NOT EXISTS FOR (s:Skill) ON (s.category)', {});
+  await run('CREATE INDEX skill_name IF NOT EXISTS FOR (s:Skill) ON (s.name)', {});
+  await run('CREATE INDEX team_department IF NOT EXISTS FOR (t:Team) ON (t.department)', {});
 
   console.log(`[seed] loading ${teams.length} teams...`);
   await run('UNWIND $rows AS row MERGE (t:Team {id: row.id}) SET t += row', { rows: teams });
@@ -433,6 +446,46 @@ async function main() {
      MERGE (proj)-[:HAS_PHASE]->(pp)`,
     { rows: hasPhase }
   );
+
+  console.log('[seed] bootstrapping admin user...');
+  const adminPasswordHash = await bcrypt.hash('admin123', 10);
+  const adminPerson = people[0];
+  await run(
+    `
+    MERGE (u:User {email: 'admin@staffinggraph.com'})
+    SET u.id = 'user-admin',
+        u.name = 'Admin User',
+        u.email = 'admin@staffinggraph.com',
+        u.passwordHash = $passwordHash,
+        u.role = 'admin',
+        u.createdAt = datetime()
+    WITH u
+    MATCH (p:Person {id: $personId})
+    MERGE (u)-[:IS_PROFILE_OF]->(p)
+    `,
+    { passwordHash: adminPasswordHash, personId: adminPerson.id }
+  );
+  console.log('[seed]   admin user: admin@staffinggraph.com / admin123');
+
+  console.log('[seed] bootstrapping demo user...');
+  const demoPasswordHash = await bcrypt.hash('demo1234', 10);
+  const demoPerson = people[1];
+  await run(
+    `
+    MERGE (u:User {email: 'demo@staffinggraph.com'})
+    SET u.id = 'user-demo',
+        u.name = 'Demo User',
+        u.email = 'demo@staffinggraph.com',
+        u.passwordHash = $passwordHash,
+        u.role = 'member',
+        u.createdAt = datetime()
+    WITH u
+    MATCH (p:Person {id: $personId})
+    MERGE (u)-[:IS_PROFILE_OF]->(p)
+    `,
+    { passwordHash: demoPasswordHash, personId: demoPerson.id }
+  );
+  console.log('[seed]   demo user: demo@staffinggraph.com / demo1234');
 
   console.log('[seed] done. Summary:');
   const { records } = await driver.executeQuery(

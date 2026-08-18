@@ -51,6 +51,7 @@ describe('env config', () => {
     process.env.COGNODB_URI = 'bolt://localhost:7687';
     process.env.COGNODB_USER = 'neo4j';
     process.env.COGNODB_PASSWORD = 'password';
+    process.env.JWT_SECRET = 'test-secret';
 
     const { env } = await import('../../src/config/env.js');
     expect(env.isConfigured).toBe(true);

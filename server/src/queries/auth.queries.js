@@ -8,8 +8,9 @@ const SALT_ROUNDS = 10;
 
 /**
  * Find a user by email for authentication.
+ * Returns passwordHash for verification — never expose this to callers.
  */
-export async function findUserByEmail(email) {
+export async function findUserForAuth(email) {
   const rows = await runQuery(
     `
     MATCH (u:User {email: $email})
@@ -22,12 +23,14 @@ export async function findUserByEmail(email) {
 
 /**
  * Find a user by ID (without password hash).
+ * Safe for profile responses.
  */
 export async function findUserById(id) {
   const rows = await runQuery(
     `
     MATCH (u:User {id: $id})
-    RETURN u { .id, .email, .name, .role } AS user
+    OPTIONAL (u)-[:IS_PROFILE_OF]->(p:Person)
+    RETURN u { .id, .email, .name, .role, personId: p.id } AS user
     `,
     { id }
   );
@@ -36,24 +39,44 @@ export async function findUserById(id) {
 
 /**
  * Create a new user with hashed password.
+ * Optionally links to an existing Person node.
  */
-export async function createUser({ email, name, password, role = 'member' }) {
+export async function createUser({ email, name, password, role = 'member', personId }) {
   const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
   const id = crypto.randomUUID();
 
-  await runQuery(
-    `
-    CREATE (u:User {
-      id: $id,
-      email: $email,
-      name: $name,
-      passwordHash: $passwordHash,
-      role: $role,
-      createdAt: datetime()
-    })
-    `,
-    { id, email, name, passwordHash, role }
-  );
+  if (personId) {
+    await runQuery(
+      `
+      CREATE (u:User {
+        id: $id,
+        email: $email,
+        name: $name,
+        passwordHash: $passwordHash,
+        role: $role,
+        createdAt: datetime()
+      })
+      WITH u
+      MATCH (p:Person {id: $personId})
+      CREATE (u)-[:IS_PROFILE_OF]->(p)
+      `,
+      { id, email, name, passwordHash, role, personId }
+    );
+  } else {
+    await runQuery(
+      `
+      CREATE (u:User {
+        id: $id,
+        email: $email,
+        name: $name,
+        passwordHash: $passwordHash,
+        role: $role,
+        createdAt: datetime()
+      })
+      `,
+      { id, email, name, passwordHash, role }
+    );
+  }
 
   return { id, email, name, role };
 }
