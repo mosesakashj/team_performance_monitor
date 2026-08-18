@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: skills-staffing-graph
+    env: node
+    plan: free
+    buildCommand: npm install --legacy-peer-deps
+    startCommand: npm run start --prefix server
+    envVariables:
+      COGNODB_URI: ${COGNODB_URI}
+      COGNODB_USER: ${COGNODB_USER}
+      COGNODB_PASSWORD: ${COGNODB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGIN: https://your-app.vercel.app
+      NODE_ENV: production
