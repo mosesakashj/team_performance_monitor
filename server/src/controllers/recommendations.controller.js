@@ -18,9 +18,6 @@ export async function getProjectRecommendations(req, res) {
 
 export async function getTeamCompatibility(req, res) {
   const { personIds } = req.body;
-  if (!personIds || !Array.isArray(personIds) || personIds.length < 2) {
-    return res.status(400).json({ error: { message: 'personIds array with at least 2 IDs required' } });
-  }
   const data = await recommendationsQueries.getTeamCompatibility(personIds);
   res.json({ compatibility: data });
 }

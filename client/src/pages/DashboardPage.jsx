@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useStats } from '../hooks/useStats.js';
 import { useProjectsList } from '../hooks/useProjects.js';
@@ -10,108 +10,9 @@ import EmptyState from '../components/common/EmptyState.jsx';
 import StatusBadge from '../components/common/StatusBadge.jsx';
 import { SkeletonTile, SkeletonCard } from '../components/common/Skeleton.jsx';
 import { SkillsDistributionChart, ProjectStatusChart, TeamUtilizationChart } from '../components/charts/DashboardCharts.jsx';
-
-function AnimatedNumber({ value, duration = 800 }) {
-  const [display, setDisplay] = useState(0);
-  const target = typeof value === 'number' ? value : parseInt(value) || 0;
-
-  useEffect(() => {
-    if (target === 0) return;
-    const start = performance.now();
-    const step = (now) => {
-      const progress = Math.min((now - start) / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setDisplay(Math.round(eased * target));
-      if (progress < 1) requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
-  }, [target, duration]);
-
-  return <span>{display.toLocaleString()}</span>;
-}
-
-function StatTile({ label, value, icon, color = 'brand', trend, trendUp }) {
-  const colorMap = {
-    brand: 'from-brand-500 to-brand-600',
-    green: 'from-emerald-500 to-emerald-600',
-    amber: 'from-amber-500 to-amber-600',
-    slate: 'from-slate-500 to-slate-600',
-    red: 'from-red-500 to-red-600',
-    violet: 'from-violet-500 to-violet-600',
-  };
-
-  return (
-    <div className="stat-card group relative overflow-hidden">
-      <div className={`absolute inset-0 bg-gradient-to-br ${colorMap[color]} opacity-[0.03] transition-opacity group-hover:opacity-[0.06]`} />
-      <div className="relative">
-        <div className="mb-3 flex items-center justify-between">
-          <span className="text-sm font-medium text-slate-500 dark:text-slate-400">{label}</span>
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 transition-colors group-hover:bg-brand-50 dark:group-hover:bg-brand-900/30 group-hover:text-brand-600 dark:group-hover:text-brand-400">
-            {icon}
-          </span>
-        </div>
-        <p className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-          {value !== null && value !== undefined ? <AnimatedNumber value={value} /> : '—'}
-        </p>
-        {trend && (
-          <div className="mt-1.5 flex items-center gap-1">
-            {trendUp !== undefined && (
-              <svg className={`h-3 w-3 ${trendUp ? 'text-emerald-500' : 'text-red-500'}`} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d={trendUp ? 'M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25' : 'M4.5 4.5l15 15m0 0V8.25m0 11.25H8.25'} />
-              </svg>
-            )}
-            <p className="text-xs text-slate-400 dark:text-slate-500">{trend}</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function QuickAction({ to, title, description, icon }) {
-  return (
-    <Link
-      to={to}
-      className="flex items-start gap-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 transition-all hover:border-brand-300 dark:hover:border-brand-500 hover:shadow-md hover:shadow-brand-50 dark:hover:shadow-brand-900/20"
-    >
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400">
-        {icon}
-      </div>
-      <div className="min-w-0">
-        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{title}</p>
-        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">{description}</p>
-      </div>
-      <svg className="ml-auto h-5 w-5 shrink-0 text-slate-300 dark:text-slate-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-      </svg>
-    </Link>
-  );
-}
-
-function SkillGapBar({ gap }) {
-  const maxBar = Math.max(gap.demandCount, gap.supplyCount);
-  return (
-    <div className="group">
-      <div className="flex items-center gap-3">
-        <div className="flex-1 min-w-0">
-          <Link to={`/skills/${gap.skill.id}`} className="text-sm font-semibold text-slate-800 dark:text-slate-200 hover:text-brand-600 dark:hover:text-brand-400 truncate block">
-            {gap.skill.name}
-          </Link>
-          <p className="text-[10px] text-slate-400 dark:text-slate-500">{gap.demandCount} projects need · {gap.supplyCount} have it</p>
-        </div>
-        <div className="shrink-0 text-right w-16">
-          <span className={`text-sm font-bold ${gap.ratio > 2 ? 'text-red-600 dark:text-red-400' : gap.ratio > 1 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
-            {gap.ratio?.toFixed(1)}x
-          </span>
-        </div>
-      </div>
-      <div className="mt-1.5 flex gap-1 h-2">
-        <div className="rounded-full bg-rose-200 dark:bg-rose-900/40 h-full" style={{ width: `${(gap.demandCount / maxBar) * 100}%` }} />
-        <div className="rounded-full bg-emerald-200 dark:bg-emerald-900/40 h-full" style={{ width: `${(gap.supplyCount / maxBar) * 100}%` }} />
-      </div>
-    </div>
-  );
-}
+import StatTile from '../components/dashboard/StatTile.jsx';
+import QuickAction from '../components/dashboard/QuickAction.jsx';
+import SkillGapBar from '../components/dashboard/SkillGapBar.jsx';
 
 export default function DashboardPage() {
   const { data: stats, isLoading: statsLoading, isError: statsError, refetch: refetchStats } = useStats();

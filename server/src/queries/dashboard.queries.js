@@ -59,13 +59,15 @@ export async function getTopBottlenecks({ limit = 5 } = {}) {
     MATCH (p:Person)
     OPTIONAL MATCH (p)-[:WORKED_ON]->(proj:Project)
     WITH p, count(DISTINCT proj) AS projectCount
+    OPTIONAL MATCH (p)-[:MEMBER_OF]->(t:Team)
+    WITH p, projectCount, count(DISTINCT t) AS teamCount
     OPTIONAL MATCH (p)<-[e:ENDORSED]-(endorser:Person)
-    WITH p, projectCount, count(DISTINCT endorser) AS endorsementCount
+    WITH p, projectCount, teamCount, count(DISTINCT endorser) AS endorsementCount
     OPTIONAL MATCH (p)-[:HAS_SKILL]->(s:Skill)
-    WITH p, projectCount, endorsementCount, count(DISTINCT s) AS skillCount,
-         (projectCount * 2 + endorsementCount * 0.5) AS score
+    WITH p, projectCount, teamCount, endorsementCount, count(DISTINCT s) AS skillCount,
+         (projectCount * 2 + teamCount + endorsementCount * 0.5) AS score
     RETURN p { .id, .name, .title, .current_utilization_pct } AS person,
-           projectCount, endorsementCount, skillCount, score
+           projectCount, teamCount, endorsementCount, skillCount, score
     ORDER BY score DESC
     LIMIT toInteger($limit)
     `,

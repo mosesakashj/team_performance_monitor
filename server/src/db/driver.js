@@ -2,6 +2,7 @@ import neo4j from 'neo4j-driver';
 import { env } from '../config/env.js';
 import { AppError } from '../utils/AppError.js';
 import { recordsToPlain } from '../utils/neo4jHelpers.js';
+import { logger } from '../utils/logger.js';
 
 let driver = null;
 let lastKnownStatus = { up: false, checkedAt: null, message: 'not checked yet' };
@@ -74,6 +75,10 @@ export async function runQuery(cypher, params = {}) {
     });
     return recordsToPlain(records);
   } catch (err) {
+    logger.error('Database query failed', {
+      code: err.code,
+      message: err.message,
+    });
     if (
       err.code === 'ServiceUnavailable' ||
       err.name === 'ServiceUnavailable' ||

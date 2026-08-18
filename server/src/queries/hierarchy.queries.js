@@ -48,49 +48,7 @@ export async function getOrgHierarchy() {
   return { topLevel, byManager: Object.fromEntries(byManager), employees: allEmployees };
 }
 
-export async function getEndorsements(skillId) {
-  if (skillId) {
-    const rows = await runQuery(
-      `
-      MATCH (endorser:Person)-[e:ENDORSED]->(p:Person)-[:HAS_SKILL]->(s:Skill {id: $skillId})
-      RETURN p.id AS endorseeId, p.name AS endorseeName, p.title AS endorseeTitle,
-             endorser.id AS endorserId, endorser.name AS endorserName, endorser.title AS endorserTitle,
-             e.date AS date, e.note AS note
-      ORDER BY p.name
-      `,
-      { skillId }
-    );
-
-    const grouped = new Map();
-    for (const row of rows) {
-      const pid = row.endorseeId;
-      if (!grouped.has(pid)) {
-        grouped.set(pid, { id: pid, name: row.endorseeName, title: row.endorseeTitle, endorsements: [] });
-      }
-      grouped.get(pid).endorsements.push({
-        endorser: { id: row.endorserId, name: row.endorserName, title: row.endorserTitle },
-        date: row.date,
-        note: row.note,
-      });
-    }
-
-    return Array.from(grouped.values()).map((g) => ({
-      endorsee: { id: g.id, name: g.name, title: g.title },
-      endorsements: g.endorsements,
-      endorsementCount: g.endorsements.length,
-    }));
-  }
-
-  const rows = await runQuery(
-    `
-    MATCH (endorser:Person)-[e:ENDORSED]->(p:Person)
-    RETURN p.id AS endorseeId, p.name AS endorseeName, p.title AS endorseeTitle,
-           endorser.id AS endorserId, endorser.name AS endorserName, endorser.title AS endorserTitle,
-           e.date AS date, e.note AS note
-    ORDER BY p.name
-    `
-  );
-
+function groupEndorsementRows(rows) {
   const grouped = new Map();
   for (const row of rows) {
     const pid = row.endorseeId;
@@ -103,12 +61,37 @@ export async function getEndorsements(skillId) {
       note: row.note,
     });
   }
+  return Array.from(grouped.values()).map((g) => ({
+    endorsee: { id: g.id, name: g.name, title: g.title },
+    endorsements: g.endorsements,
+    endorsementCount: g.endorsements.length,
+  }));
+}
 
-  return Array.from(grouped.values())
-    .map((g) => ({
-      endorsee: { id: g.id, name: g.name, title: g.title },
-      endorsements: g.endorsements,
-      endorsementCount: g.endorsements.length,
-    }))
-    .sort((a, b) => b.endorsementCount - a.endorsementCount);
+export async function getEndorsements(skillId) {
+  if (skillId) {
+    const rows = await runQuery(
+      `
+      MATCH (endorser:Person)-[e:ENDORSED]->(p:Person)-[:HAS_SKILL]->(s:Skill {id: $skillId})
+      RETURN p.id AS endorseeId, p.name AS endorseeName, p.title AS endorseeTitle,
+             endorser.id AS endorserId, endorser.name AS endorserName, endorser.title AS endorserTitle,
+             e.date AS date, e.note AS note
+      ORDER BY p.name
+      `,
+      { skillId }
+    );
+    return groupEndorsementRows(rows);
+  }
+
+  const rows = await runQuery(
+    `
+    MATCH (endorser:Person)-[e:ENDORSED]->(p:Person)
+    RETURN p.id AS endorseeId, p.name AS endorseeName, p.title AS endorseeTitle,
+           endorser.id AS endorserId, endorser.name AS endorserName, endorser.title AS endorserTitle,
+           e.date AS date, e.note AS note
+    ORDER BY p.name
+    `
+  );
+
+  return groupEndorsementRows(rows).sort((a, b) => b.endorsementCount - a.endorsementCount);
 }

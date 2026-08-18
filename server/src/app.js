@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { randomUUID } from 'crypto';
 import { env } from './config/env.js';
+import { logger } from './utils/logger.js';
 import { notFoundHandler, errorHandler } from './middleware/errorHandler.js';
 import healthRoutes from './routes/health.routes.js';
 import statsRoutes from './routes/stats.routes.js';
@@ -17,6 +18,8 @@ import hierarchyRoutes from './routes/hierarchy.routes.js';
 import analyticsRoutes from './routes/analytics.routes.js';
 import dashboardRoutes from './routes/dashboard.routes.js';
 import recommendationsRoutes from './routes/recommendations.routes.js';
+
+morgan.token('id', (req) => req.id);
 
 export function createApp() {
   const app = express();
@@ -43,7 +46,7 @@ export function createApp() {
 
   app.use(cors({ origin: env.corsOrigin }));
   app.use(express.json({ limit: '100kb' }));
-  app.use(morgan(env.nodeEnv === 'production' ? 'combined' : 'dev'));
+  app.use(morgan(':id :method :url :status :response-time ms'));
 
   app.use('/api/health', healthRoutes);
   app.use('/api/stats', statsRoutes);

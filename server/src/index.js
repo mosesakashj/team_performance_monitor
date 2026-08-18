@@ -1,25 +1,24 @@
 import { createApp } from './app.js';
 import { env } from './config/env.js';
 import { verifyConnectivity, closeDriver } from './db/driver.js';
+import { logger } from './utils/logger.js';
 
 const app = createApp();
 
 const server = app.listen(env.port, () => {
-  console.log(`[server] listening on port ${env.port} (${env.nodeEnv})`);
+  logger.info('Server started', { port: env.port, env: env.nodeEnv });
 });
 
-// Check connectivity at boot but never crash the process on failure -- /api/health
-// must be able to report the outage instead of Render crash-looping the service.
 verifyConnectivity().then((status) => {
   if (status.up) {
-    console.log(`[db] CognoDB connection healthy (${status.latencyMs}ms)`);
+    logger.info('Database connection healthy', { latencyMs: status.latencyMs });
   } else {
-    console.warn(`[db] CognoDB is not reachable yet: ${status.message}`);
+    logger.warn('Database not reachable', { message: status.message });
   }
 });
 
 async function shutdown(signal) {
-  console.log(`[server] received ${signal}, shutting down`);
+  logger.info('Shutting down', { signal });
   server.close(async () => {
     await closeDriver();
     process.exit(0);
