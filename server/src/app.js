@@ -52,7 +52,7 @@ export function createApp() {
   });
   app.use('/api', limiter);
 
-  // app.use(cors({ origin: env.corsOrigin })); // CORS commented out for testing
+  app.use(cors({ origin: '*' })); // Allow all origins for production
   app.use(express.json({ limit: '100kb' }));
   app.use(morgan(':id :method :url :status :response-time ms'));
 
