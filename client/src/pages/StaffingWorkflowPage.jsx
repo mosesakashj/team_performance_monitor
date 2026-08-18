@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import { useProjectsList } from '../hooks/useProjects.js';
 import { usePeopleList } from '../hooks/usePeople.js';
 import { useStaffingSummary, useCreateProposal, useApproveProposal } from '../hooks/useStaffing.js';
+import { useQuery } from '@tanstack/react-query';
 import * as staffingApi from '../api/staffing.js';
 import LoadingSpinner from '../components/common/LoadingSpinner.jsx';
 import ErrorBanner from '../components/common/ErrorBanner.jsx';
@@ -13,9 +13,8 @@ import { useToast } from '../hooks/useToast.jsx';
 
 function useProjectProposals(projectId) {
   return useQuery({
-    queryKey: ['staffing-proposals', projectId],
-    queryFn: () => staffingApi.getProjectProposals(projectId),
-    enabled: true,
+    queryKey: ['staffing-proposals', projectId || null],
+    queryFn: () => staffingApi.getProjectProposals(projectId || null),
   });
 }
 
@@ -86,7 +85,7 @@ function ProposalForm({ onSuccess }) {
   );
 }
 
-function ProposalCard({ proposal }) {
+function ProposalCard({ proposal, showProject }) {
   const approveProposal = useApproveProposal();
   const [showConfirm, setShowConfirm] = useState(false);
 
@@ -108,6 +107,12 @@ function ProposalCard({ proposal }) {
         </span>
       </div>
       <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-500">
+        {showProject && proposal.project && (
+          <>
+            <span>Project: <span className="font-medium text-slate-700">{proposal.project.name}</span></span>
+            <span>·</span>
+          </>
+        )}
         <span>Role: <span className="font-medium text-slate-700">{proposal.proposal.proposedRole}</span></span>
         <span>·</span>
         <span>Allocation: <span className="font-medium text-slate-700">{proposal.proposal.proposedAllocation}%</span></span>
@@ -182,7 +187,7 @@ export default function StaffingWorkflowPage() {
           <EmptyState title="No proposals found" description={selectedProject ? 'No proposals for this project yet.' : 'Create a staffing proposal above to get started.'} icon="📋" />
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {proposals.map((p) => <ProposalCard key={p.proposal.id} proposal={p} />)}
+            {proposals.map((p) => <ProposalCard key={p.proposal.id} proposal={p} showProject={!selectedProject} />)}
           </div>
         )}
       </div>

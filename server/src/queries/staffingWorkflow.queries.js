@@ -31,18 +31,30 @@ export async function createStaffingProposal({ projectId, personId, proposedRole
 }
 
 /**
- * Get staffing proposals for a project.
+ * Get staffing proposals for a project, or all proposals if projectId is null.
  */
 export async function getProjectProposals(projectId) {
+  if (projectId) {
+    return runQuery(
+      `
+      MATCH (prop:StaffingProposal)-[:FOR_PROJECT]->(proj:Project {id: $projectId})
+      MATCH (prop)-[:FOR_PERSON]->(p:Person)
+      RETURN prop { .id, .proposedRole, .proposedAllocation, .notes, .status, .createdAt } AS proposal,
+             p { .id, .name, .title, .seniority } AS person
+      ORDER BY prop.createdAt DESC
+      `,
+      { projectId }
+    );
+  }
   return runQuery(
     `
-    MATCH (prop:StaffingProposal)-[:FOR_PROJECT]->(proj:Project {id: $projectId})
+    MATCH (prop:StaffingProposal)-[:FOR_PROJECT]->(proj:Project)
     MATCH (prop)-[:FOR_PERSON]->(p:Person)
     RETURN prop { .id, .proposedRole, .proposedAllocation, .notes, .status, .createdAt } AS proposal,
-           p { .id, .name, .title, .seniority } AS person
+           p { .id, .name, .title, .seniority } AS person,
+           proj { .id, .name } AS project
     ORDER BY prop.createdAt DESC
-    `,
-    { projectId }
+    `
   );
 }
 
