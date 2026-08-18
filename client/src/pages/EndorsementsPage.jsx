@@ -5,6 +5,7 @@ import { useSkillsList } from '../hooks/useSkills.js';
 import LoadingSpinner from '../components/common/LoadingSpinner.jsx';
 import ErrorBanner from '../components/common/ErrorBanner.jsx';
 import EmptyState from '../components/common/EmptyState.jsx';
+import Pagination from '../components/common/Pagination.jsx';
 
 const ITEMS_PER_PAGE = 9;
 
@@ -58,76 +59,6 @@ function EndorseeCard({ endorsee, endorsements, endorsementCount }) {
           </p>
         )}
       </div>
-    </div>
-  );
-}
-
-function Pagination({ currentPage, totalPages, onPageChange }) {
-  const pages = useMemo(() => {
-    const arr = [];
-    const maxVisible = 5;
-    let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-    let end = Math.min(totalPages, start + maxVisible - 1);
-    if (end - start < maxVisible - 1) {
-      start = Math.max(1, end - maxVisible + 1);
-    }
-    for (let i = start; i <= end; i++) arr.push(i);
-    return arr;
-  }, [currentPage, totalPages]);
-
-  if (totalPages <= 1) return null;
-
-  return (
-    <div className="flex items-center justify-center gap-1">
-      <button
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
-      >
-        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
-      </button>
-      {pages[0] > 1 && (
-        <>
-          <button
-            onClick={() => onPageChange(1)}
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm font-medium text-slate-600 dark:text-slate-300 transition-colors hover:bg-slate-50 dark:hover:bg-slate-700"
-          >
-            1
-          </button>
-          {pages[0] > 2 && <span className="px-1 text-slate-400 dark:text-slate-500">...</span>}
-        </>
-      )}
-      {pages.map((page) => (
-        <button
-          key={page}
-          onClick={() => onPageChange(page)}
-          className={`flex h-9 w-9 items-center justify-center rounded-lg text-sm font-medium transition-all ${
-            page === currentPage
-              ? 'bg-brand-600 text-white shadow-sm shadow-brand-200 dark:shadow-brand-900/40'
-              : 'border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
-          }`}
-        >
-          {page}
-        </button>
-      ))}
-      {pages[pages.length - 1] < totalPages && (
-        <>
-          {pages[pages.length - 1] < totalPages - 1 && <span className="px-1 text-slate-400 dark:text-slate-500">...</span>}
-          <button
-            onClick={() => onPageChange(totalPages)}
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm font-medium text-slate-600 dark:text-slate-300 transition-colors hover:bg-slate-50 dark:hover:bg-slate-700"
-          >
-            {totalPages}
-          </button>
-        </>
-      )}
-      <button
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
-      >
-        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
-      </button>
     </div>
   );
 }
@@ -250,7 +181,7 @@ export default function EndorsementsPage() {
               <EndorseeCard key={item.endorsee.id} {...item} />
             ))}
           </div>
-          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+          <Pagination offset={(currentPage - 1) * ITEMS_PER_PAGE} limit={ITEMS_PER_PAGE} total={filteredEndorsements.length} onChange={(newOffset) => setCurrentPage(Math.floor(newOffset / ITEMS_PER_PAGE) + 1)} />
         </>
       )}
     </div>

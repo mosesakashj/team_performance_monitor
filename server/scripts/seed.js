@@ -24,16 +24,16 @@ const driver = neo4j.driver(uri, neo4j.auth.basic(user, password));
 const PEOPLE_COUNT = 180;
 const PROJECT_COUNT = 40;
 const TEAM_NAMES = [
-  ['Platform Engineering', 'Engineering'],
-  ['Data & Analytics', 'Engineering'],
-  ['Fintech Delivery', 'Consulting'],
-  ['Mobile', 'Engineering'],
-  ['DevOps & SRE', 'Engineering'],
-  ['AI/ML', 'Engineering'],
-  ['QA & Reliability', 'Engineering'],
-  ['Design Systems', 'Design'],
-  ['Growth Engineering', 'Engineering'],
-  ['Security', 'Engineering'],
+  ['Platform Engineering', 'Engineering', 'dept-1'],
+  ['Data & Analytics', 'Engineering', 'dept-1'],
+  ['Fintech Delivery', 'Consulting', 'dept-2'],
+  ['Mobile', 'Engineering', 'dept-1'],
+  ['DevOps & SRE', 'Engineering', 'dept-1'],
+  ['AI/ML', 'Engineering', 'dept-1'],
+  ['QA & Reliability', 'Engineering', 'dept-1'],
+  ['Design Systems', 'Design', 'dept-3'],
+  ['Growth Engineering', 'Engineering', 'dept-1'],
+  ['Security', 'Engineering', 'dept-1'],
 ];
 
 const SENIORITIES = ['junior', 'mid', 'senior', 'staff', 'principal'];
@@ -45,6 +45,23 @@ const TITLES_BY_SENIORITY = {
   staff: ['Staff Engineer', 'Principal Consultant', 'Engineering Manager'],
   principal: ['Principal Engineer', 'Director of Engineering', 'VP of Delivery'],
 };
+
+const DEPARTMENTS = [
+  { id: 'dept-1', name: 'Engineering', head_count: 0 },
+  { id: 'dept-2', name: 'Consulting', head_count: 0 },
+  { id: 'dept-3', name: 'Design', head_count: 0 },
+];
+
+const CERTIFICATIONS = [
+  { id: 'cert-1', name: 'AWS Solutions Architect', provider: 'Amazon', category: 'Cloud', validity_months: 36 },
+  { id: 'cert-2', name: 'Google Cloud Professional', provider: 'Google', category: 'Cloud', validity_months: 24 },
+  { id: 'cert-3', name: 'Azure Developer Associate', provider: 'Microsoft', category: 'Cloud', validity_months: 24 },
+  { id: 'cert-4', name: 'Certified Kubernetes Administrator', provider: 'CNCF', category: 'Infrastructure', validity_months: 24 },
+  { id: 'cert-5', name: 'PMP', provider: 'PMI', category: 'Management', validity_months: 36 },
+  { id: 'cert-6', name: 'Scrum Master (CSM)', provider: 'Scrum Alliance', category: 'Management', validity_months: 24 },
+  { id: 'cert-7', name: 'TOGAF 9 Certified', provider: 'The Open Group', category: 'Architecture', validity_months: 60 },
+  { id: 'cert-8', name: 'Certified Information Systems Security Professional (CISSP)', provider: 'ISC2', category: 'Security', validity_months: 36 },
+];
 
 const PROJECT_STATUSES = ['proposed', 'active', 'completed', 'on_hold'];
 const PROJECT_STATUS_WEIGHTS = [0.15, 0.45, 0.3, 0.1];
@@ -69,10 +86,11 @@ function isoDate(date) {
 
 // ---------- Generate nodes ----------
 
-const teams = TEAM_NAMES.map(([name, department], i) => ({
+const teams = TEAM_NAMES.map(([name, department, departmentId], i) => ({
   id: `team-${i + 1}`,
   name,
   department,
+  departmentId,
 }));
 
 const people = Array.from({ length: PEOPLE_COUNT }, (_, i) => {
@@ -224,6 +242,57 @@ for (const [, projectPeople] of workedOnByProject) {
   }
 }
 
+// ---------- New: Departments, Certifications, ProjectPhases ----------
+
+// Departments are static, just count heads per department
+for (const team of teams) {
+  const dept = DEPARTMENTS.find((d) => d.id === team.departmentId);
+  if (dept) {
+    const membersInTeam = memberOf.filter((m) => m.toId === team.id && !m.end_date);
+    dept.head_count += membersInTeam.length;
+  }
+}
+
+// Certifications: assign 1-3 certs to ~40% of people
+const hasCertification = [];
+for (const person of people) {
+  if (!faker.datatype.boolean({ probability: 0.4 })) continue;
+  const n = faker.number.int({ min: 1, max: 3 });
+  for (const cert of pickN(CERTIFICATIONS, n)) {
+    const issueDate = faker.date.past({ years: 3 });
+    hasCertification.push({
+      fromId: person.id,
+      toId: cert.id,
+      issued_by: cert.provider,
+      issue_date: isoDate(issueDate),
+      expiry_date: isoDate(new Date(issueDate.getTime() + cert.validity_months * 30 * 24 * 60 * 60 * 1000)),
+    });
+  }
+}
+
+// ProjectPhases: each active/completed project gets 2-4 phases
+const phases = [];
+const hasPhase = [];
+const PHASE_STATUSES = ['completed', 'active', 'upcoming'];
+for (const project of projects) {
+  if (project.status === 'proposed') continue;
+  const phaseCount = faker.number.int({ min: 2, max: 4 });
+  const phaseNames = ['Discovery & Planning', 'Design & Architecture', 'Implementation', 'Testing & QA', 'Deployment & Launch'];
+  for (let i = 0; i < phaseCount; i++) {
+    const phaseId = `phase-${project.id}-${i + 1}`;
+    const status = i < phaseCount - 1 ? 'completed' : (project.status === 'active' ? 'active' : 'completed');
+    phases.push({
+      id: phaseId,
+      name: phaseNames[i] || `Phase ${i + 1}`,
+      start_date: project.start_date,
+      end_date: project.end_date,
+      status,
+      deliverables: faker.lorem.sentence(),
+    });
+    hasPhase.push({ fromId: project.id, toId: phaseId });
+  }
+}
+
 // ---------- Load into CognoDB ----------
 
 async function run(cypher, params) {
@@ -245,6 +314,9 @@ async function main() {
   await run('CREATE CONSTRAINT skill_id IF NOT EXISTS FOR (s:Skill) REQUIRE s.id IS UNIQUE', {});
   await run('CREATE CONSTRAINT project_id IF NOT EXISTS FOR (p:Project) REQUIRE p.id IS UNIQUE', {});
   await run('CREATE CONSTRAINT team_id IF NOT EXISTS FOR (t:Team) REQUIRE t.id IS UNIQUE', {});
+  await run('CREATE CONSTRAINT department_id IF NOT EXISTS FOR (d:Department) REQUIRE d.id IS UNIQUE', {});
+  await run('CREATE CONSTRAINT certification_id IF NOT EXISTS FOR (c:Certification) REQUIRE c.id IS UNIQUE', {});
+  await run('CREATE CONSTRAINT projectphase_id IF NOT EXISTS FOR (pp:ProjectPhase) REQUIRE pp.id IS UNIQUE', {});
 
   console.log(`[seed] loading ${teams.length} teams...`);
   await run('UNWIND $rows AS row MERGE (t:Team {id: row.id}) SET t += row', { rows: teams });
@@ -326,6 +398,40 @@ async function main() {
      MERGE (a)-[r:ENDORSED {skill_id: row.skill_id}]->(b)
      SET r.rating = row.rating, r.note = row.note, r.date = row.date`,
     { rows: endorsed }
+  );
+
+  console.log(`[seed] loading ${DEPARTMENTS.length} departments...`);
+  await run('UNWIND $rows AS row MERGE (d:Department {id: row.id}) SET d += row', { rows: DEPARTMENTS });
+
+  console.log(`[seed] loading ${CERTIFICATIONS.length} certifications...`);
+  await run('UNWIND $rows AS row MERGE (c:Certification {id: row.id}) SET c += row', { rows: CERTIFICATIONS });
+
+  console.log(`[seed] loading ${phases.length} project phases...`);
+  await run('UNWIND $rows AS row MERGE (pp:ProjectPhase {id: row.id}) SET pp += row', { rows: phases });
+
+  console.log(`[seed] loading ${teams.length} BELONGS_TO relationships...`);
+  await run(
+    `UNWIND $rows AS row
+     MATCH (t:Team {id: row.id}), (d:Department {id: row.departmentId})
+     MERGE (t)-[:BELONGS_TO]->(d)`,
+    { rows: teams }
+  );
+
+  console.log(`[seed] loading ${hasCertification.length} HAS_CERTIFICATION relationships...`);
+  await run(
+    `UNWIND $rows AS row
+     MATCH (p:Person {id: row.fromId}), (c:Certification {id: row.toId})
+     MERGE (p)-[r:HAS_CERTIFICATION]->(c)
+     SET r.issued_by = row.issued_by, r.issue_date = row.issue_date, r.expiry_date = row.expiry_date`,
+    { rows: hasCertification }
+  );
+
+  console.log(`[seed] loading ${hasPhase.length} HAS_PHASE relationships...`);
+  await run(
+    `UNWIND $rows AS row
+     MATCH (proj:Project {id: row.fromId}), (pp:ProjectPhase {id: row.toId})
+     MERGE (proj)-[:HAS_PHASE]->(pp)`,
+    { rows: hasPhase }
   );
 
   console.log('[seed] done. Summary:');

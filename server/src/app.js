@@ -1,6 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import { randomUUID } from 'crypto';
 import { env } from './config/env.js';
 import { notFoundHandler, errorHandler } from './middleware/errorHandler.js';
 import healthRoutes from './routes/health.routes.js';
@@ -18,8 +21,28 @@ import recommendationsRoutes from './routes/recommendations.routes.js';
 export function createApp() {
   const app = express();
 
+  // Security headers
+  app.use(helmet());
+
+  // Request ID
+  app.use((req, res, next) => {
+    req.id = req.headers['x-request-id'] || randomUUID();
+    res.setHeader('X-Request-Id', req.id);
+    next();
+  });
+
+  // Rate limiting
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: { message: 'Too many requests, please try again later', code: 'RATE_LIMIT_EXCEEDED' } },
+  });
+  app.use('/api', limiter);
+
   app.use(cors({ origin: env.corsOrigin }));
-  app.use(express.json());
+  app.use(express.json({ limit: '100kb' }));
   app.use(morgan(env.nodeEnv === 'production' ? 'combined' : 'dev'));
 
   app.use('/api/health', healthRoutes);

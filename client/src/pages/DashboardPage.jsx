@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useStats } from '../hooks/useStats.js';
 import { useProjectsList } from '../hooks/useProjects.js';
@@ -15,7 +15,7 @@ function AnimatedNumber({ value, duration = 800 }) {
   const [display, setDisplay] = useState(0);
   const target = typeof value === 'number' ? value : parseInt(value) || 0;
 
-  useState(() => {
+  useEffect(() => {
     if (target === 0) return;
     const start = performance.now();
     const step = (now) => {
@@ -25,7 +25,7 @@ function AnimatedNumber({ value, duration = 800 }) {
       if (progress < 1) requestAnimationFrame(step);
     };
     requestAnimationFrame(step);
-  }, [target]);
+  }, [target, duration]);
 
   return <span>{display.toLocaleString()}</span>;
 }

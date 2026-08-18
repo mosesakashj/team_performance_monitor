@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { exportToCSV, exportToJSON } from '../../hooks/useExportData';
+import { exportToCSV, exportToJSON } from '../../utils/exportData.js';
 
 export function ExportButton({ data, filename, columns }) {
   const [open, setOpen] = useState(false);

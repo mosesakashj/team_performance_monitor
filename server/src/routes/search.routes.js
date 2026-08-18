@@ -1,8 +1,10 @@
 import { Router } from 'express';
 import { asyncHandler } from '../middleware/asyncHandler.js';
-import { search } from '../controllers/search.controller.js';
+import { validate } from '../middleware/validate.js';
+import { searchSchema } from '../validators/search.validator.js';
+import * as searchController from '../controllers/search.controller.js';
 
 const router = Router();
-router.get('/', asyncHandler(search));
+router.get('/', validate(searchSchema), asyncHandler(searchController.search));
 
 export default router;

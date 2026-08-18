@@ -59,9 +59,18 @@ export function SkeletonTable({ rows = 5, cols = 5 }) {
   );
 }
 
+const GRID_COLS = {
+  1: 'lg:grid-cols-1',
+  2: 'lg:grid-cols-2',
+  3: 'lg:grid-cols-3',
+  4: 'lg:grid-cols-4',
+  5: 'lg:grid-cols-5',
+  6: 'lg:grid-cols-6',
+};
+
 export function SkeletonGrid({ count = 6, cols = 3 }) {
   return (
-    <div className={`grid gap-4 sm:grid-cols-2 lg:grid-cols-${cols}`}>
+    <div className={`grid gap-4 sm:grid-cols-2 ${GRID_COLS[cols] || GRID_COLS[3]}`}>
       {Array.from({ length: count }).map((_, i) => (
         <SkeletonCard key={i} />
       ))}
