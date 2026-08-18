@@ -7,6 +7,23 @@ import {
   getEnrichedStats,
 } from './dashboard.queries.js';
 import { getBottleneckPeople } from './shared.queries.js';
+import { runQuery } from '../db/driver.js';
+
+async function getTeamUtilization() {
+  const rows = await runQuery(
+    `
+    MATCH (t:Team)
+    OPTIONAL MATCH (p:Person)-[m:MEMBER_OF]->(t)
+    WHERE m.end_date IS NULL
+    WITH t, count(p) AS memberCount
+    OPTIONAL MATCH (t)-[:DELIVERS]->(proj:Project)
+    WITH t, memberCount, count(proj) AS projectCount
+    RETURN t.id AS id, t.name AS name, memberCount, projectCount
+    ORDER BY memberCount DESC
+    `
+  );
+  return rows;
+}
 
 /**
  * Batched dashboard data: combines multiple dashboard queries into a single request.
@@ -22,6 +39,7 @@ export async function getDashboardBatch() {
     bottlenecks,
     skillGaps,
     activityFeed,
+    teamUtilization,
   ] = await Promise.all([
     getOverviewStats(),
     getEnrichedStats(),
@@ -30,6 +48,7 @@ export async function getDashboardBatch() {
     getBottleneckPeople({ limit: 5 }),
     getGlobalSkillGaps(),
     getActivityFeed(),
+    getTeamUtilization(),
   ]);
 
   return {
@@ -40,5 +59,6 @@ export async function getDashboardBatch() {
     bottlenecks,
     gaps: skillGaps,
     feed: activityFeed,
+    teamUtilization,
   };
 }

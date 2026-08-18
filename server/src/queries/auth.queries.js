@@ -29,7 +29,7 @@ export async function findUserById(id) {
   const rows = await runQuery(
     `
     MATCH (u:User {id: $id})
-    OPTIONAL (u)-[:IS_PROFILE_OF]->(p:Person)
+    OPTIONAL MATCH (u)-[:IS_PROFILE_OF]->(p:Person)
     RETURN u { .id, .email, .name, .role, personId: p.id } AS user
     `,
     { id }

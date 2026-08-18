@@ -33,6 +33,7 @@ export default function DashboardPage() {
   const skillGaps = batch?.gaps;
   const activityFeed = batch?.feed;
   const projectHealth = batch?.health;
+  const teamUtilization = batch?.teamUtilization;
 
   return (
     <div className="flex flex-col gap-8 animate-fade-in">
@@ -162,7 +163,7 @@ export default function DashboardPage() {
           <div className="grid gap-6 lg:grid-cols-3">
             <ProjectStatusChart projects={projectHealth ?? []} />
             <SkillsDistributionChart skills={skillDist ?? []} />
-            <TeamUtilizationChart teams={[]} />
+            <TeamUtilizationChart teams={teamUtilization ?? []} />
           </div>
         )}
         {activeChartTab === 'skills' && (
@@ -185,7 +186,7 @@ export default function DashboardPage() {
         )}
         {activeChartTab === 'teams' && (
           <div className="grid gap-6 lg:grid-cols-2">
-            <TeamUtilizationChart teams={[]} />
+            <TeamUtilizationChart teams={teamUtilization ?? []} />
             <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm">
               <h3 className="section-heading mb-1">Top Bottleneck People</h3>
               <p className="mb-4 text-xs text-slate-400 dark:text-slate-500">People who are critical-path blockers</p>

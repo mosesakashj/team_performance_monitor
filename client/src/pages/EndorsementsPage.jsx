@@ -2,6 +2,8 @@ import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useEndorsements } from '../hooks/useHierarchy.js';
 import { useSkillsList } from '../hooks/useSkills.js';
+import { usePeopleList } from '../hooks/usePeople.js';
+import { useCreateEndorsement } from '../hooks/useMutations.js';
 import LoadingSpinner from '../components/common/LoadingSpinner.jsx';
 import ErrorBanner from '../components/common/ErrorBanner.jsx';
 import EmptyState from '../components/common/EmptyState.jsx';
@@ -63,13 +65,68 @@ function EndorseeCard({ endorsee, endorsements, endorsementCount }) {
   );
 }
 
+function CreateEndorsementForm({ people, skills, onSubmit, onCancel, isPending }) {
+  const [endorseeId, setEndorseeId] = useState('');
+  const [skillId, setSkillId] = useState('');
+  const [rating, setRating] = useState(5);
+  const [note, setNote] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!endorseeId || !skillId) return;
+    onSubmit({ personId: endorseeId, data: { skillId, rating: Number(rating), note } });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="rounded-2xl border border-brand-200 bg-brand-50/50 dark:border-brand-800 dark:bg-brand-900/20 p-6">
+      <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-4">Endorse Someone</h3>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Person to Endorse</label>
+          <select value={endorseeId} onChange={(e) => setEndorseeId(e.target.value)} className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+            <option value="">Select a person</option>
+            {people.map((p) => <option key={p.id} value={p.id}>{p.name} — {p.title}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Skill</label>
+          <select value={skillId} onChange={(e) => setSkillId(e.target.value)} className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+            <option value="">Select a skill</option>
+            {skills.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Rating</label>
+          <select value={rating} onChange={(e) => setRating(e.target.value)} className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+            {[5, 4, 3, 2, 1].map((r) => <option key={r} value={r}>{r} Star{r !== 1 ? 's' : ''}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Note (optional)</label>
+          <input type="text" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Why are you endorsing them?" className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" />
+        </div>
+      </div>
+      <div className="mt-4 flex justify-end gap-2">
+        <button type="button" onClick={onCancel} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
+        <button type="submit" disabled={isPending || !endorseeId || !skillId} className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 transition-colors disabled:opacity-50">
+          {isPending ? 'Submitting...' : 'Submit Endorsement'}
+        </button>
+      </div>
+    </form>
+  );
+}
+
 export default function EndorsementsPage() {
   const [selectedSkill, setSelectedSkill] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showForm, setShowForm] = useState(false);
   const { data: endorsements, isLoading, isError, refetch } = useEndorsements(selectedSkill || null);
   const { data: skillsResp } = useSkillsList();
+  const { data: peopleData } = usePeopleList({ limit: 100 });
+  const createEndorsement = useCreateEndorsement();
   const skillList = skillsResp?.skills || [];
+  const people = peopleData?.people || [];
 
   const filteredEndorsements = useMemo(() => {
     if (!endorsements) return [];
@@ -121,6 +178,17 @@ export default function EndorsementsPage() {
         </div>
       </div>
 
+      {/* Create Endorsement Form */}
+      {showForm && (
+        <CreateEndorsementForm
+          people={people}
+          skills={skillList}
+          onSubmit={(data) => { createEndorsement.mutate(data, { onSuccess: () => setShowForm(false) }); }}
+          onCancel={() => setShowForm(false)}
+          isPending={createEndorsement.isPending}
+        />
+      )}
+
       {/* Filters */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative flex-1 max-w-md">
@@ -135,8 +203,13 @@ export default function EndorsementsPage() {
             className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 py-2.5 pl-10 pr-4 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
           />
         </div>
-        <div className="text-sm text-slate-500 dark:text-slate-400">
-          {filteredEndorsements.length} result{filteredEndorsements.length !== 1 ? 's' : ''}
+        <div className="flex items-center gap-3">
+          <button onClick={() => setShowForm(!showForm)} className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 transition-colors">
+            {showForm ? 'Cancel' : 'Endorse Someone'}
+          </button>
+          <span className="text-sm text-slate-500 dark:text-slate-400">
+            {filteredEndorsements.length} result{filteredEndorsements.length !== 1 ? 's' : ''}
+          </span>
         </div>
       </div>
 

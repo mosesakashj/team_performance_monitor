@@ -1,7 +1,15 @@
-export default function FilterBar({ children }) {
+export default function FilterBar({ children, isLoading = false }) {
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white p-4">
-      {children}
+    <div className={`flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 ${isLoading ? 'opacity-60 pointer-events-none' : ''}`}>
+      {isLoading ? (
+        <div className="flex flex-wrap items-center gap-3 w-full">
+          <div className="h-10 flex-1 min-w-[200px] rounded-lg bg-slate-100 animate-pulse" />
+          <div className="h-10 w-[160px] rounded-lg bg-slate-100 animate-pulse" />
+          <div className="h-10 w-[160px] rounded-lg bg-slate-100 animate-pulse" />
+        </div>
+      ) : (
+        children
+      )}
     </div>
   );
 }

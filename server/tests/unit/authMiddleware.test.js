@@ -36,32 +36,24 @@ describe('auth middleware', () => {
       expect(next).toHaveBeenCalled();
     });
 
-    it('throws 401 when no token', async () => {
+    it('calls next with 401 when no token', async () => {
       const req = mockReq(null);
       const res = mockRes();
       const next = vi.fn();
 
-      try {
-        await authenticate(req, res, next);
-        expect.fail('should have thrown');
-      } catch (e) {
-        expect(e.statusCode).toBe(401);
-      }
+      await authenticate(req, res, next);
+      expect(next).toHaveBeenCalledWith(expect.objectContaining({ statusCode: 401 }));
     });
 
-    it('throws 401 on invalid token', async () => {
+    it('calls next with 401 on invalid token', async () => {
       authQueries.verifyToken.mockImplementation(() => { throw new Error('invalid'); });
 
       const req = mockReq('bad-token');
       const res = mockRes();
       const next = vi.fn();
 
-      try {
-        await authenticate(req, res, next);
-        expect.fail('should have thrown');
-      } catch (e) {
-        expect(e.statusCode).toBe(401);
-      }
+      await authenticate(req, res, next);
+      expect(next).toHaveBeenCalledWith(expect.objectContaining({ statusCode: 401 }));
     });
   });
 
@@ -75,17 +67,13 @@ describe('auth middleware', () => {
       expect(next).toHaveBeenCalled();
     });
 
-    it('throws 403 for non-matching role', async () => {
+    it('calls next with 403 for non-matching role', async () => {
       const req = { user: { id: 'u1', role: 'member' } };
       const res = mockRes();
       const next = vi.fn();
 
-      try {
-        authorize('admin')(req, res, next);
-        expect.fail('should have thrown');
-      } catch (e) {
-        expect(e.statusCode).toBe(403);
-      }
+      authorize('admin')(req, res, next);
+      expect(next).toHaveBeenCalledWith(expect.objectContaining({ statusCode: 403 }));
     });
   });
 

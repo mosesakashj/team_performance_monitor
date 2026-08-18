@@ -22,6 +22,8 @@ const LoginPage = lazy(() => import('./pages/LoginPage.jsx'));
 const RegisterPage = lazy(() => import('./pages/RegisterPage.jsx'));
 const WhatIfPage = lazy(() => import('./pages/WhatIfPage.jsx'));
 const GanttPage = lazy(() => import('./pages/GanttPage.jsx'));
+const StaffingWorkflowPage = lazy(() => import('./pages/StaffingWorkflowPage.jsx'));
+const ReportsPage = lazy(() => import('./pages/ReportsPage.jsx'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage.jsx'));
 
 function PageLoader() {
@@ -54,6 +56,8 @@ export default function App() {
             <Route path="endorsements" element={<ProtectedRoute><EndorsementsPage /></ProtectedRoute>} />
             <Route path="what-if" element={<ProtectedRoute><WhatIfPage /></ProtectedRoute>} />
             <Route path="timeline" element={<ProtectedRoute><GanttPage /></ProtectedRoute>} />
+            <Route path="staffing" element={<ProtectedRoute><StaffingWorkflowPage /></ProtectedRoute>} />
+            <Route path="reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
             <Route path="profile" element={<ProtectedRoute><UserProfilePage /></ProtectedRoute>} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>

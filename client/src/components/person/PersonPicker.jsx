@@ -62,10 +62,10 @@ export default function PersonPicker({ label, selected, onSelect }) {
         <div className="flex items-center justify-between rounded-xl border-2 border-brand-300 dark:border-brand-600 bg-brand-50 dark:bg-brand-900/20 px-4 py-3 transition-all">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-100 dark:bg-brand-800/50 text-sm font-semibold text-brand-700 dark:text-brand-300">
-              {selected.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+              {(selected.label || selected.name || '').split(' ').map((n) => n[0]).join('').slice(0, 2)}
             </div>
             <div>
-              <span className="text-sm font-semibold text-brand-800 dark:text-brand-200 block">{selected.name}</span>
+              <span className="text-sm font-semibold text-brand-800 dark:text-brand-200 block">{selected.label || selected.name}</span>
               {selected.label && <span className="text-[11px] text-brand-500 dark:text-brand-400">{selected.label}</span>}
             </div>
           </div>

@@ -24,7 +24,7 @@ export default function WhatIfPage() {
           Select a person to see what would happen if they left the organization.
         </p>
         <PersonPicker
-          selected={selectedPersonId}
+          selected={selectedPersonId ? { id: selectedPersonId, label: '' } : null}
           onSelect={(person) => setSelectedPersonId(person?.id || null)}
           placeholder="Search for a person..."
         />

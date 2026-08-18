@@ -57,7 +57,7 @@ export default function ProjectsListPage() {
         </div>
       </div>
 
-      <FilterBar>
+      <FilterBar isLoading={isLoading}>
         <FilterSelect
           value={filters.status}
           onChange={(val) => {

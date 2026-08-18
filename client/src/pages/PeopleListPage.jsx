@@ -65,7 +65,7 @@ export default function PeopleListPage() {
         </div>
       </div>
 
-      <FilterBar>
+      <FilterBar isLoading={isLoading}>
         <FilterInput
           value={localSearch}
           onChange={(val) => {
