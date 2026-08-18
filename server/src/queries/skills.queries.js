@@ -12,7 +12,7 @@ export async function listSkills({ category } = {}, { limit = 100, offset = 0 } 
     WITH s, count(DISTINCT p) AS peopleCount
     RETURN s { .*, peopleCount: peopleCount } AS skill
     `,
-    { category: category ?? null }
+    { category: category ?? null, offset, limit }
   );
   return rows.map((r) => r.skill);
 }
