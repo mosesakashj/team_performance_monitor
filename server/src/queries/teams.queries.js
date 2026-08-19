@@ -14,7 +14,7 @@ export async function listTeams({ limit = 50, offset = 0 } = {}) {
       WITH t
       ORDER BY t.name
       SKIP toInteger($offset) LIMIT toInteger($limit)
-      OPTIONAL MATCH (p:Person)-[:MEMBER_OF]->(t)
+      OPTIONAL MATCH (p:Person)-[m:MEMBER_OF]->(t)
       OPTIONAL MATCH (t)-[:DELIVERS]->(proj:Project)
       OPTIONAL MATCH (t)-[:BELONGS_TO]->(d:Department)
       WITH t, collect(DISTINCT {personId: p.id, name: p.name, title: p.title, role: m.role, endDate: m.end_date}) AS roster, collect(DISTINCT {projectId: proj.id, name: proj.name, status: proj.status}) AS projects, collect(DISTINCT {departmentId: d.id, departmentName: d.name})[0] AS department
