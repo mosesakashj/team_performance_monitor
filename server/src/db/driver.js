@@ -92,7 +92,7 @@ export async function runQuery(cypher, params = {}) {
         'DB_UNAVAILABLE'
       );
     }
-    throw err;
+    throw new AppError(500, err.message || 'Database query failed', 'DB_QUERY_ERROR');
   }
 }
 
