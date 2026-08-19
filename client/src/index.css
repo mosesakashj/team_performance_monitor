@@ -81,6 +81,12 @@
   .stat-card {
     @apply card-base overflow-hidden;
   }
+  .stat-card:hover {
+    @apply shadow-lg;
+  }
+  .dark .stat-card:hover {
+    @apply shadow-slate-800/50;
+  }
 
   .list-container {
     @apply divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white;
